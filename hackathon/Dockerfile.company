@@ -19,11 +19,11 @@ COPY src/ ./src/
 RUN echo "=== Verifying source structure ===" && \
     ls -la /app/src/ && \
     echo "=== Verifying api_company_lookup.py exists ===" && \
-    test -f /app/src/api_company_lookup.py && echo "✅ api_company_lookup.py found" || echo "❌ api_company_lookup.py NOT FOUND" && \
-    echo "=== Checking get_apify_client function ===" && \
-    grep -n "def get_apify_client" /app/src/api_company_lookup.py && \
+    test -f /app/src/api_company_lookup.py && echo "✅ api_company_lookup.py found" || (echo "❌ api_company_lookup.py NOT FOUND" && exit 1) && \
+    echo "=== Checking get_client function ===" && \
+    (grep -q "def get_client" /app/src/api_company_lookup.py && echo "✅ get_client function found") || (echo "❌ get_client function NOT FOUND" && exit 1) && \
     echo "=== Verifying no NotImplementedError ===" && \
-    (! grep -q "NotImplementedError" /app/src/api_company_lookup.py && echo "✅ No NotImplementedError found") || (echo "❌ NotImplementedError found!" && grep -n "NotImplementedError" /app/src/api_company_lookup.py)
+    (! grep -q "NotImplementedError" /app/src/api_company_lookup.py && echo "✅ No NotImplementedError found") || (echo "❌ NotImplementedError found!" && grep -n "NotImplementedError" /app/src/api_company_lookup.py && exit 1)
 
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
