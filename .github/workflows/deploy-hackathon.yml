@@ -7,12 +7,14 @@ on:
       - master
     paths:
       - 'hackathon/**'
+      - '.github/workflows/deploy-hackathon.yml'
   pull_request:
     branches:
       - main
       - master
     paths:
       - 'hackathon/**'
+      - '.github/workflows/deploy-hackathon.yml'
   workflow_dispatch:
 
 env:
