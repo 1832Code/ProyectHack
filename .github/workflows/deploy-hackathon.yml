@@ -73,6 +73,10 @@ jobs:
           gcloud services enable cloudbuild.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
           gcloud services enable artifactregistry.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
 
+      - name: Configure Docker for GCR
+        run: |
+          gcloud auth configure-docker --quiet
+
       - name: Deploy Company Lookup Service
         working-directory: ./hackathon
         env:
@@ -83,19 +87,11 @@ jobs:
           
           IMAGE_NAME="gcr.io/${{ env.GCP_PROJECT_ID }}/company-lookup-api"
           
-          echo "Creating cloudbuild.yaml..."
-          cat > cloudbuild-temp.yaml <<EOF
-          steps:
-          - name: 'gcr.io/cloud-builders/docker'
-            args: ['build', '-f', 'Dockerfile.company', '-t', '${IMAGE_NAME}', '.']
-          images:
-          - '${IMAGE_NAME}'
-          EOF
-          
           echo "Building Docker image..."
-          gcloud builds submit \
-            --config cloudbuild-temp.yaml \
-            --project "${{ env.GCP_PROJECT_ID }}"
+          docker build -f Dockerfile.company -t "${IMAGE_NAME}" .
+          
+          echo "Pushing Docker image..."
+          docker push "${IMAGE_NAME}"
           
           ENV_VARS="APIFY_API_TOKEN=${APIFY_API_TOKEN}"
           
@@ -174,6 +170,10 @@ jobs:
           gcloud services enable cloudbuild.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
           gcloud services enable artifactregistry.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
 
+      - name: Configure Docker for GCR
+        run: |
+          gcloud auth configure-docker --quiet
+
       - name: Deploy Google Search Service
         working-directory: ./hackathon
         env:
@@ -184,19 +184,11 @@ jobs:
           
           IMAGE_NAME="gcr.io/${{ env.GCP_PROJECT_ID }}/google-search-api"
           
-          echo "Creating cloudbuild.yaml..."
-          cat > cloudbuild-temp.yaml <<EOF
-          steps:
-          - name: 'gcr.io/cloud-builders/docker'
-            args: ['build', '-f', 'Dockerfile.google', '-t', '${IMAGE_NAME}', '.']
-          images:
-          - '${IMAGE_NAME}'
-          EOF
-          
           echo "Building Docker image..."
-          gcloud builds submit \
-            --config cloudbuild-temp.yaml \
-            --project "${{ env.GCP_PROJECT_ID }}"
+          docker build -f Dockerfile.google -t "${IMAGE_NAME}" .
+          
+          echo "Pushing Docker image..."
+          docker push "${IMAGE_NAME}"
           
           ENV_VARS="APIFY_API_TOKEN=${APIFY_API_TOKEN}"
           
@@ -275,6 +267,10 @@ jobs:
           gcloud services enable cloudbuild.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
           gcloud services enable artifactregistry.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
 
+      - name: Configure Docker for GCR
+        run: |
+          gcloud auth configure-docker --quiet
+
       - name: Deploy Instagram Search Service
         working-directory: ./hackathon
         env:
@@ -285,19 +281,11 @@ jobs:
           
           IMAGE_NAME="gcr.io/${{ env.GCP_PROJECT_ID }}/instagram-search-api"
           
-          echo "Creating cloudbuild.yaml..."
-          cat > cloudbuild-temp.yaml <<EOF
-          steps:
-          - name: 'gcr.io/cloud-builders/docker'
-            args: ['build', '-f', 'Dockerfile.instagram', '-t', '${IMAGE_NAME}', '.']
-          images:
-          - '${IMAGE_NAME}'
-          EOF
-          
           echo "Building Docker image..."
-          gcloud builds submit \
-            --config cloudbuild-temp.yaml \
-            --project "${{ env.GCP_PROJECT_ID }}"
+          docker build -f Dockerfile.instagram -t "${IMAGE_NAME}" .
+          
+          echo "Pushing Docker image..."
+          docker push "${IMAGE_NAME}"
           
           ENV_VARS="APIFY_API_TOKEN=${APIFY_API_TOKEN}"
           
