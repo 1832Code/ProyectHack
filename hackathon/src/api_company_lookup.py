@@ -10,39 +10,11 @@ from typing import List, Optional, Dict, Any
 import os
 import logging
 
-import sys
-import os
-
-_base_path = os.path.dirname(__file__)
-_module_path = os.path.join(_base_path, 'modules')
-_parent_path = os.path.join(_base_path, '..')
-
-if _parent_path not in sys.path:
-    sys.path.insert(0, _parent_path)
-if _module_path not in sys.path:
-    sys.path.insert(0, _module_path)
-
-try:
-    from modules.lookup_company import (
-        get_apify_client,
-        lookup_company,
-        get_summary_stats
-    )
-    _module_imported = True
-except ImportError as e:
-    import logging
-    import traceback
-    _module_imported = False
-    logger = logging.getLogger(__name__)
-    logger.error(f"Failed to import lookup_company module: {e}")
-    logger.error(f"PYTHONPATH: {os.getenv('PYTHONPATH', 'not set')}")
-    logger.error(f"Current working directory: {os.getcwd()}")
-    logger.error(f"Python path: {sys.path}")
-    logger.error(f"Base path: {_base_path}")
-    logger.error(f"Module path: {_module_path}")
-    logger.error(f"Module file exists: {os.path.exists(os.path.join(_module_path, 'lookup_company.py'))}")
-    logger.error(f"Traceback: {traceback.format_exc()}")
-    raise ImportError(f"Cannot import lookup_company module: {e}. Make sure the modules directory exists and is accessible.")
+from src.modules.lookup_company import (
+    get_apify_client,
+    lookup_company,
+    get_summary_stats
+)
 
 # Configure logging
 logging.basicConfig(
