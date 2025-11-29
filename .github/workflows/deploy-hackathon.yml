@@ -34,10 +34,27 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Prepare Google Service Account JSON
+        id: prepare-json
+        run: |
+          if echo "${{ secrets.GOOGLE_JSON }}" | base64 -d > /tmp/gcp-sa-key.json 2>/dev/null && [ -s /tmp/gcp-sa-key.json ]; then
+            echo "Decoded from base64"
+          else
+            echo "${{ secrets.GOOGLE_JSON }}" > /tmp/gcp-sa-key.json
+            echo "Used as plain JSON"
+          fi
+          CREDENTIALS=$(cat /tmp/gcp-sa-key.json)
+          echo "::add-mask::$CREDENTIALS"
+          {
+            echo 'credentials_json<<EOF'
+            echo "$CREDENTIALS"
+            echo 'EOF'
+          } >> $GITHUB_OUTPUT
+
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GOOGLE_JSON }}
+          credentials_json: ${{ steps.prepare-json.outputs.credentials_json }}
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
@@ -104,10 +121,27 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Prepare Google Service Account JSON
+        id: prepare-json
+        run: |
+          if echo "${{ secrets.GOOGLE_JSON }}" | base64 -d > /tmp/gcp-sa-key.json 2>/dev/null && [ -s /tmp/gcp-sa-key.json ]; then
+            echo "Decoded from base64"
+          else
+            echo "${{ secrets.GOOGLE_JSON }}" > /tmp/gcp-sa-key.json
+            echo "Used as plain JSON"
+          fi
+          CREDENTIALS=$(cat /tmp/gcp-sa-key.json)
+          echo "::add-mask::$CREDENTIALS"
+          {
+            echo 'credentials_json<<EOF'
+            echo "$CREDENTIALS"
+            echo 'EOF'
+          } >> $GITHUB_OUTPUT
+
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GOOGLE_JSON }}
+          credentials_json: ${{ steps.prepare-json.outputs.credentials_json }}
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
@@ -174,10 +208,27 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Prepare Google Service Account JSON
+        id: prepare-json
+        run: |
+          if echo "${{ secrets.GOOGLE_JSON }}" | base64 -d > /tmp/gcp-sa-key.json 2>/dev/null && [ -s /tmp/gcp-sa-key.json ]; then
+            echo "Decoded from base64"
+          else
+            echo "${{ secrets.GOOGLE_JSON }}" > /tmp/gcp-sa-key.json
+            echo "Used as plain JSON"
+          fi
+          CREDENTIALS=$(cat /tmp/gcp-sa-key.json)
+          echo "::add-mask::$CREDENTIALS"
+          {
+            echo 'credentials_json<<EOF'
+            echo "$CREDENTIALS"
+            echo 'EOF'
+          } >> $GITHUB_OUTPUT
+
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GOOGLE_JSON }}
+          credentials_json: ${{ steps.prepare-json.outputs.credentials_json }}
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
