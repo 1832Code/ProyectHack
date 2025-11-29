@@ -11,6 +11,11 @@ import os
 import logging
 
 try:
+    import sys
+    import os
+    
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+    
     from modules.lookup_company import (
         get_apify_client,
         lookup_company,
@@ -18,10 +23,19 @@ try:
     )
 except ImportError as e:
     import logging
+    import traceback
     logger = logging.getLogger(__name__)
     logger.error(f"Failed to import lookup_company module: {e}")
     logger.error(f"PYTHONPATH: {os.getenv('PYTHONPATH', 'not set')}")
     logger.error(f"Current working directory: {os.getcwd()}")
+    logger.error(f"Python path: {sys.path}")
+    logger.error(f"Traceback: {traceback.format_exc()}")
+    
+    if os.path.exists(os.path.join(os.path.dirname(__file__), 'modules', 'lookup_company.py')):
+        logger.error("Module file exists but cannot be imported")
+    else:
+        logger.error("Module file does not exist")
+    
     raise ImportError(f"Cannot import lookup_company module: {e}. Make sure the modules directory exists and is accessible.")
 
 # Configure logging
