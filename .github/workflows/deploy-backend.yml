@@ -119,18 +119,30 @@ jobs:
           echo "Forcing rebuild by adding timestamp to Dockerfile..."
           echo "# Build timestamp: $(date +%s)" >> Dockerfile
           
-          if ! gcloud run deploy backend-api \
-            --source . \
+          SERVICE_EXISTS=$(gcloud run services describe backend-api \
             --region "${{ env.GCP_REGION }}" \
+            --project "${{ env.GCP_PROJECT_ID }}" \
+            --format="value(name)" 2>/dev/null || echo "")
+          
+          DEPLOY_ARGS="--source . \
+            --region ${{ env.GCP_REGION }} \
             --platform managed \
             --allow-unauthenticated \
-            --set-env-vars "${ENV_VARS}" \
+            --set-env-vars ${ENV_VARS} \
             --memory 2Gi \
             --cpu 2 \
             --timeout 3600 \
             --max-instances 10 \
-            --project "${{ env.GCP_PROJECT_ID }}" \
-            --no-traffic 2>&1 | tee /tmp/deploy.log; then
+            --project ${{ env.GCP_PROJECT_ID }}"
+          
+          if [ -n "$SERVICE_EXISTS" ]; then
+            echo "Service exists, deploying with --no-traffic..."
+            DEPLOY_ARGS="${DEPLOY_ARGS} --no-traffic"
+          else
+            echo "Service does not exist, creating new service..."
+          fi
+          
+          if ! gcloud run deploy backend-api ${DEPLOY_ARGS} 2>&1 | tee /tmp/deploy.log; then
             echo "❌ Deployment failed. Checking logs..."
             echo ""
             echo "=== Deployment Output ==="
@@ -200,11 +212,24 @@ jobs:
             exit 1
           fi
           
-          echo "✅ Deployment successful. Setting traffic to latest revision..."
-          gcloud run services update backend-api \
-            --region "${{ env.GCP_REGION }}" \
-            --project "${{ env.GCP_PROJECT_ID }}" \
-            --traffic-latest
+          if [ -n "$SERVICE_EXISTS" ]; then
+            echo "✅ Deployment successful. Setting traffic to latest revision..."
+            LATEST_REVISION=$(gcloud run revisions list \
+              --service=backend-api \
+              --region="${{ env.GCP_REGION }}" \
+              --project="${{ env.GCP_PROJECT_ID }}" \
+              --format="value(name)" \
+              --limit=1)
+            if [ -n "$LATEST_REVISION" ]; then
+              gcloud run services update-traffic backend-api \
+                --region "${{ env.GCP_REGION }}" \
+                --project "${{ env.GCP_PROJECT_ID }}" \
+                --to-latest
+              echo "✅ Traffic set to latest revision: $LATEST_REVISION"
+            fi
+          else
+            echo "✅ New service deployed successfully"
+          fi
 
       - name: Get service URL
         run: |
