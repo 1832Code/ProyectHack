@@ -141,10 +141,25 @@ jobs:
               --format="yaml" || true
             echo ""
             echo "Recent logs:"
-            gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=company-lookup-api" \
-              --limit 50 \
-              --project "${{ env.GCP_PROJECT_ID }}" \
-              --format="table(timestamp,severity,textPayload)" || true
+            LATEST_REVISION=$(gcloud run revisions list \
+              --service=company-lookup-api \
+              --region="${{ env.GCP_REGION }}" \
+              --project="${{ env.GCP_PROJECT_ID }}" \
+              --format="value(name)" \
+              --limit=1) || echo ""
+            
+            if [ -n "$LATEST_REVISION" ]; then
+              echo "Latest revision: $LATEST_REVISION"
+              gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=company-lookup-api AND resource.labels.revision_name=$LATEST_REVISION" \
+                --limit 100 \
+                --project "${{ env.GCP_PROJECT_ID }}" \
+                --format="table(timestamp,severity,textPayload,jsonPayload.message)" || true
+            else
+              gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=company-lookup-api" \
+                --limit 100 \
+                --project "${{ env.GCP_PROJECT_ID }}" \
+                --format="table(timestamp,severity,textPayload,jsonPayload.message)" || true
+            fi
             exit 1
           fi
           
