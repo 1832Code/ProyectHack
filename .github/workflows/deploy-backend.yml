@@ -100,19 +100,19 @@ jobs:
       - name: Deploy Backend Service
         working-directory: ./backend
         env:
-          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          DEEPSEEK_API: ${{ secrets.DEEPSEEK_API }}
           DEBUG: ${{ secrets.DEBUG }}
         run: |
           echo "Deploying Backend API to Cloud Run..."
           
-          ENV_VARS="DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}"
+          ENV_VARS="DEEPSEEK_API_KEY=${DEEPSEEK_API}"
           
           if [ -n "${DEBUG}" ]; then
             ENV_VARS="${ENV_VARS},DEBUG=${DEBUG}"
           fi
           
           echo "✅ Environment variables configured:"
-          echo "   - DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:+✅ set (length: ${#DEEPSEEK_API_KEY})}${DEEPSEEK_API_KEY:-❌ not set}"
+          echo "   - DEEPSEEK_API: ${DEEPSEEK_API:+✅ set (length: ${#DEEPSEEK_API})}${DEEPSEEK_API:-❌ not set}"
           echo "   - DEBUG: ${DEBUG:-not set}"
           
           echo "Building and deploying to Cloud Run..."
