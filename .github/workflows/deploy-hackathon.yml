@@ -73,18 +73,6 @@ jobs:
           gcloud services enable cloudbuild.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
           gcloud services enable artifactregistry.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
 
-      - name: Create Artifact Registry repository if not exists
-        run: |
-          gcloud artifacts repositories create gcr.io \
-            --repository-format=docker \
-            --location="${{ env.GCP_REGION }}" \
-            --project="${{ env.GCP_PROJECT_ID }}" \
-            --description="Docker repository for Cloud Run" || echo "Repository already exists"
-
-      - name: Configure Docker for Artifact Registry
-        run: |
-          gcloud auth configure-docker "${{ env.GCP_REGION }}-docker.pkg.dev" --quiet
-
       - name: Deploy Company Lookup Service
         working-directory: ./hackathon
         env:
@@ -93,13 +81,7 @@ jobs:
         run: |
           echo "Deploying Company Lookup API to Cloud Run..."
           
-          IMAGE_NAME="${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/gcr.io/company-lookup-api"
-          
-          echo "Building Docker image..."
-          docker build -f Dockerfile.company -t "${IMAGE_NAME}" .
-          
-          echo "Pushing Docker image..."
-          docker push "${IMAGE_NAME}"
+          cp Dockerfile.company Dockerfile
           
           ENV_VARS="APIFY_API_TOKEN=${APIFY_API_TOKEN}"
           
@@ -107,9 +89,9 @@ jobs:
             ENV_VARS="${ENV_VARS},DEBUG=${DEBUG}"
           fi
           
-          echo "Deploying to Cloud Run..."
+          echo "Building and deploying to Cloud Run..."
           gcloud run deploy company-lookup-api \
-            --image "${IMAGE_NAME}" \
+            --source . \
             --region "${{ env.GCP_REGION }}" \
             --platform managed \
             --allow-unauthenticated \
@@ -119,6 +101,9 @@ jobs:
             --timeout 3600 \
             --max-instances 10 \
             --project "${{ env.GCP_PROJECT_ID }}"
+          
+          rm -f Dockerfile
+          
 
       - name: Get service URL
         run: |
@@ -178,18 +163,6 @@ jobs:
           gcloud services enable cloudbuild.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
           gcloud services enable artifactregistry.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
 
-      - name: Create Artifact Registry repository if not exists
-        run: |
-          gcloud artifacts repositories create gcr.io \
-            --repository-format=docker \
-            --location="${{ env.GCP_REGION }}" \
-            --project="${{ env.GCP_PROJECT_ID }}" \
-            --description="Docker repository for Cloud Run" || echo "Repository already exists"
-
-      - name: Configure Docker for Artifact Registry
-        run: |
-          gcloud auth configure-docker "${{ env.GCP_REGION }}-docker.pkg.dev" --quiet
-
       - name: Deploy Google Search Service
         working-directory: ./hackathon
         env:
@@ -198,13 +171,7 @@ jobs:
         run: |
           echo "Deploying Google Search API to Cloud Run..."
           
-          IMAGE_NAME="${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/gcr.io/google-search-api"
-          
-          echo "Building Docker image..."
-          docker build -f Dockerfile.google -t "${IMAGE_NAME}" .
-          
-          echo "Pushing Docker image..."
-          docker push "${IMAGE_NAME}"
+          cp Dockerfile.google Dockerfile
           
           ENV_VARS="APIFY_API_TOKEN=${APIFY_API_TOKEN}"
           
@@ -212,9 +179,9 @@ jobs:
             ENV_VARS="${ENV_VARS},DEBUG=${DEBUG}"
           fi
           
-          echo "Deploying to Cloud Run..."
+          echo "Building and deploying to Cloud Run..."
           gcloud run deploy google-search-api \
-            --image "${IMAGE_NAME}" \
+            --source . \
             --region "${{ env.GCP_REGION }}" \
             --platform managed \
             --allow-unauthenticated \
@@ -224,6 +191,9 @@ jobs:
             --timeout 3600 \
             --max-instances 10 \
             --project "${{ env.GCP_PROJECT_ID }}"
+          
+          rm -f Dockerfile
+          
 
       - name: Get service URL
         run: |
@@ -283,18 +253,6 @@ jobs:
           gcloud services enable cloudbuild.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
           gcloud services enable artifactregistry.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
 
-      - name: Create Artifact Registry repository if not exists
-        run: |
-          gcloud artifacts repositories create gcr.io \
-            --repository-format=docker \
-            --location="${{ env.GCP_REGION }}" \
-            --project="${{ env.GCP_PROJECT_ID }}" \
-            --description="Docker repository for Cloud Run" || echo "Repository already exists"
-
-      - name: Configure Docker for Artifact Registry
-        run: |
-          gcloud auth configure-docker "${{ env.GCP_REGION }}-docker.pkg.dev" --quiet
-
       - name: Deploy Instagram Search Service
         working-directory: ./hackathon
         env:
@@ -303,13 +261,7 @@ jobs:
         run: |
           echo "Deploying Instagram Search API to Cloud Run..."
           
-          IMAGE_NAME="${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/gcr.io/instagram-search-api"
-          
-          echo "Building Docker image..."
-          docker build -f Dockerfile.instagram -t "${IMAGE_NAME}" .
-          
-          echo "Pushing Docker image..."
-          docker push "${IMAGE_NAME}"
+          cp Dockerfile.instagram Dockerfile
           
           ENV_VARS="APIFY_API_TOKEN=${APIFY_API_TOKEN}"
           
@@ -317,9 +269,9 @@ jobs:
             ENV_VARS="${ENV_VARS},DEBUG=${DEBUG}"
           fi
           
-          echo "Deploying to Cloud Run..."
+          echo "Building and deploying to Cloud Run..."
           gcloud run deploy instagram-search-api \
-            --image "${IMAGE_NAME}" \
+            --source . \
             --region "${{ env.GCP_REGION }}" \
             --platform managed \
             --allow-unauthenticated \
@@ -329,6 +281,9 @@ jobs:
             --timeout 3600 \
             --max-instances 10 \
             --project "${{ env.GCP_PROJECT_ID }}"
+          
+          rm -f Dockerfile
+          
 
       - name: Get service URL
         run: |
