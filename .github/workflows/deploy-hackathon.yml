@@ -73,9 +73,17 @@ jobs:
           gcloud services enable cloudbuild.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
           gcloud services enable artifactregistry.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
 
-      - name: Configure Docker for GCR
+      - name: Create Artifact Registry repository if not exists
         run: |
-          gcloud auth configure-docker --quiet
+          gcloud artifacts repositories create gcr.io \
+            --repository-format=docker \
+            --location="${{ env.GCP_REGION }}" \
+            --project="${{ env.GCP_PROJECT_ID }}" \
+            --description="Docker repository for Cloud Run" || echo "Repository already exists"
+
+      - name: Configure Docker for Artifact Registry
+        run: |
+          gcloud auth configure-docker "${{ env.GCP_REGION }}-docker.pkg.dev" --quiet
 
       - name: Deploy Company Lookup Service
         working-directory: ./hackathon
@@ -85,7 +93,7 @@ jobs:
         run: |
           echo "Deploying Company Lookup API to Cloud Run..."
           
-          IMAGE_NAME="gcr.io/${{ env.GCP_PROJECT_ID }}/company-lookup-api"
+          IMAGE_NAME="${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/gcr.io/company-lookup-api"
           
           echo "Building Docker image..."
           docker build -f Dockerfile.company -t "${IMAGE_NAME}" .
@@ -170,9 +178,17 @@ jobs:
           gcloud services enable cloudbuild.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
           gcloud services enable artifactregistry.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
 
-      - name: Configure Docker for GCR
+      - name: Create Artifact Registry repository if not exists
         run: |
-          gcloud auth configure-docker --quiet
+          gcloud artifacts repositories create gcr.io \
+            --repository-format=docker \
+            --location="${{ env.GCP_REGION }}" \
+            --project="${{ env.GCP_PROJECT_ID }}" \
+            --description="Docker repository for Cloud Run" || echo "Repository already exists"
+
+      - name: Configure Docker for Artifact Registry
+        run: |
+          gcloud auth configure-docker "${{ env.GCP_REGION }}-docker.pkg.dev" --quiet
 
       - name: Deploy Google Search Service
         working-directory: ./hackathon
@@ -182,7 +198,7 @@ jobs:
         run: |
           echo "Deploying Google Search API to Cloud Run..."
           
-          IMAGE_NAME="gcr.io/${{ env.GCP_PROJECT_ID }}/google-search-api"
+          IMAGE_NAME="${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/gcr.io/google-search-api"
           
           echo "Building Docker image..."
           docker build -f Dockerfile.google -t "${IMAGE_NAME}" .
@@ -267,9 +283,17 @@ jobs:
           gcloud services enable cloudbuild.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
           gcloud services enable artifactregistry.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
 
-      - name: Configure Docker for GCR
+      - name: Create Artifact Registry repository if not exists
         run: |
-          gcloud auth configure-docker --quiet
+          gcloud artifacts repositories create gcr.io \
+            --repository-format=docker \
+            --location="${{ env.GCP_REGION }}" \
+            --project="${{ env.GCP_PROJECT_ID }}" \
+            --description="Docker repository for Cloud Run" || echo "Repository already exists"
+
+      - name: Configure Docker for Artifact Registry
+        run: |
+          gcloud auth configure-docker "${{ env.GCP_REGION }}-docker.pkg.dev" --quiet
 
       - name: Deploy Instagram Search Service
         working-directory: ./hackathon
@@ -279,7 +303,7 @@ jobs:
         run: |
           echo "Deploying Instagram Search API to Cloud Run..."
           
-          IMAGE_NAME="gcr.io/${{ env.GCP_PROJECT_ID }}/instagram-search-api"
+          IMAGE_NAME="${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/gcr.io/instagram-search-api"
           
           echo "Building Docker image..."
           docker build -f Dockerfile.instagram -t "${IMAGE_NAME}" .
