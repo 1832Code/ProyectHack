@@ -73,6 +73,16 @@ jobs:
           gcloud services enable cloudbuild.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
           gcloud services enable artifactregistry.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
 
+      - name: Verify Service Account Permissions
+        run: |
+          SA_EMAIL=$(gcloud config get-value account)
+          echo "Current service account: $SA_EMAIL"
+          echo "Verifying Cloud Run permissions..."
+          gcloud projects get-iam-policy "${{ secrets.GCP_PROJECT_ID }}" \
+            --flatten="bindings[].members" \
+            --filter="bindings.members:$SA_EMAIL" \
+            --format="table(bindings.role)" || echo "⚠️  Could not verify permissions. Ensure the service account has 'Cloud Run Admin' or 'Cloud Run Developer' role."
+
       - name: Deploy Company Lookup Service
         working-directory: ./hackathon
         env:
