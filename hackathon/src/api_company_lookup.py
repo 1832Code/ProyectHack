@@ -10,11 +10,19 @@ from typing import List, Optional, Dict, Any
 import os
 import logging
 
-from modules.lookup_company import (
-    get_apify_client,
-    lookup_company,
-    get_summary_stats
-)
+try:
+    from modules.lookup_company import (
+        get_apify_client,
+        lookup_company,
+        get_summary_stats
+    )
+except ImportError as e:
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.error(f"Failed to import lookup_company module: {e}")
+    logger.error(f"PYTHONPATH: {os.getenv('PYTHONPATH', 'not set')}")
+    logger.error(f"Current working directory: {os.getcwd()}")
+    raise ImportError(f"Cannot import lookup_company module: {e}. Make sure the modules directory exists and is accessible.")
 
 # Configure logging
 logging.basicConfig(
@@ -153,10 +161,23 @@ async def lookup_company_endpoint(
         logger.error(f"Validation error: {e}")
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"Error during company lookup: {e}", exc_info=True)
+        import traceback
+        error_detail = str(e)
+        error_traceback = traceback.format_exc()
+        logger.error(f"Error during company lookup: {error_detail}")
+        logger.error(f"Traceback: {error_traceback}")
+        
+        debug_info = {}
+        if os.getenv("DEBUG"):
+            debug_info = {
+                "traceback": error_traceback,
+                "pythonpath": os.getenv("PYTHONPATH", "not set"),
+                "cwd": os.getcwd()
+            }
+        
         raise HTTPException(
             status_code=500,
-            detail=f"Error interno del servidor: {str(e)}"
+            detail=f"Error interno del servidor: {error_detail}. Debug: {debug_info if debug_info else 'Enable DEBUG env var for details'}"
         )
 
 

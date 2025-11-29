@@ -7,6 +7,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY src/ ./src/
 
+RUN ls -la /app/src/ && ls -la /app/src/modules/ || echo "Modules directory check"
+
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 ENV API_MODULE=api_company_lookup
