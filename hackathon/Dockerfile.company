@@ -8,7 +8,11 @@ ENV BUILD_DATE=${BUILD_DATE}
 ENV BUILD_VERSION=${BUILD_VERSION}
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN echo "=== Installing dependencies ===" && \
+    pip install --no-cache-dir -r requirements.txt && \
+    echo "=== Verifying LangChain installation ===" && \
+    python -c "import langchain; print(f'✅ langchain version: {langchain.__version__}')" && \
+    python -c "from langchain_deepseek import ChatDeepSeek; print('✅ langchain-deepseek imported successfully')" || (echo "❌ langchain-deepseek installation failed" && echo "=== Installed langchain packages ===" && pip list | grep -i langchain && echo "=== Trying to import ===" && python -c "from langchain_deepseek import ChatDeepSeek" 2>&1 || true)
 
 COPY src/ ./src/
 
