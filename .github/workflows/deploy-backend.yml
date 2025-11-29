@@ -1,0 +1,217 @@
+name: Deploy Backend Service to Cloud Run
+
+on:
+  push:
+    branches:
+      - backend
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-backend.yml'
+  workflow_dispatch:
+
+env:
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GCP_REGION: ${{ secrets.GCP_REGION || 'us-central1' }}
+  DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+  DEBUG: ${{ secrets.DEBUG || '' }}
+
+jobs:
+  deploy-backend:
+    name: Deploy Backend API
+    runs-on: ubuntu-latest
+    
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Prepare Google Service Account JSON
+        id: prepare-json
+        run: |
+          SECRET_VALUE="${{ secrets.GOOGLE_JSON }}"
+          if [ -z "$SECRET_VALUE" ]; then
+            echo "❌ Error: GOOGLE_JSON secret is empty or not set"
+            exit 1
+          fi
+          if echo "$SECRET_VALUE" | base64 -d > /tmp/gcp-sa-key.json 2>/dev/null && [ -s /tmp/gcp-sa-key.json ]; then
+            echo "✅ Decoded from base64"
+          else
+            echo "$SECRET_VALUE" > /tmp/gcp-sa-key.json
+            echo "✅ Used as plain JSON"
+          fi
+          if [ ! -s /tmp/gcp-sa-key.json ]; then
+            echo "❌ Error: Failed to prepare credentials file"
+            exit 1
+          fi
+          delimiter="EOF_$(date +%s)_$$"
+          echo "credentials_json<<${delimiter}" >> $GITHUB_OUTPUT
+          cat /tmp/gcp-sa-key.json >> $GITHUB_OUTPUT
+          echo "${delimiter}" >> $GITHUB_OUTPUT
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ steps.prepare-json.outputs.credentials_json }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Enable required APIs
+        run: |
+          gcloud services enable run.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
+          gcloud services enable cloudbuild.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
+          gcloud services enable artifactregistry.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
+
+      - name: Grant required permissions to service account
+        continue-on-error: true
+        run: |
+          SA_EMAIL=$(gcloud config get-value account 2>/dev/null)
+          PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
+          
+          echo "Attempting to grant permissions to: $SA_EMAIL"
+          echo "Project: $PROJECT_ID"
+          echo ""
+          
+          echo "Granting Cloud Run Admin role..."
+          gcloud projects add-iam-policy-binding $PROJECT_ID \
+            --member="serviceAccount:$SA_EMAIL" \
+            --role="roles/run.admin" \
+            --condition=None || echo "⚠️  Could not grant Cloud Run Admin (may already have it or insufficient permissions)"
+          
+          echo "Granting Service Account User role..."
+          gcloud projects add-iam-policy-binding $PROJECT_ID \
+            --member="serviceAccount:$SA_EMAIL" \
+            --role="roles/iam.serviceAccountUser" \
+            --condition=None || echo "⚠️  Could not grant Service Account User (may already have it or insufficient permissions)"
+          
+          echo "Granting Cloud Build Editor role..."
+          gcloud projects add-iam-policy-binding $PROJECT_ID \
+            --member="serviceAccount:$SA_EMAIL" \
+            --role="roles/cloudbuild.builds.editor" \
+            --condition=None || echo "⚠️  Could not grant Cloud Build Editor (may already have it or insufficient permissions)"
+          
+          echo ""
+          echo "✅ Permission grant attempt completed. Waiting 10 seconds for propagation..."
+          sleep 10
+
+      - name: Deploy Backend Service
+        working-directory: ./backend
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          DEBUG: ${{ secrets.DEBUG }}
+        run: |
+          echo "Deploying Backend API to Cloud Run..."
+          
+          ENV_VARS="DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}"
+          
+          if [ -n "${DEBUG}" ]; then
+            ENV_VARS="${ENV_VARS},DEBUG=${DEBUG}"
+          fi
+          
+          echo "✅ Environment variables configured:"
+          echo "   - DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:+✅ set (length: ${#DEEPSEEK_API_KEY})}${DEEPSEEK_API_KEY:-❌ not set}"
+          echo "   - DEBUG: ${DEBUG:-not set}"
+          
+          echo "Building and deploying to Cloud Run..."
+          echo "Forcing rebuild by adding timestamp to Dockerfile..."
+          echo "# Build timestamp: $(date +%s)" >> Dockerfile
+          
+          if ! gcloud run deploy backend-api \
+            --source . \
+            --region "${{ env.GCP_REGION }}" \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars "${ENV_VARS}" \
+            --memory 2Gi \
+            --cpu 2 \
+            --timeout 3600 \
+            --max-instances 10 \
+            --project "${{ env.GCP_PROJECT_ID }}" \
+            --no-traffic 2>&1 | tee /tmp/deploy.log; then
+            echo "❌ Deployment failed. Checking logs..."
+            echo ""
+            echo "=== Deployment Output ==="
+            cat /tmp/deploy.log || true
+            echo ""
+            echo "=== Checking Cloud Build Logs ==="
+            BUILD_ID=$(gcloud builds list \
+              --project "${{ env.GCP_PROJECT_ID }}" \
+              --limit 1 \
+              --format="value(id)" \
+              --filter="source.storageSource.bucket~'gcf-sources' OR source.storageSource.bucket~'artifacts'") || echo ""
+            
+            if [ -n "$BUILD_ID" ]; then
+              echo "Latest build ID: $BUILD_ID"
+              echo ""
+              echo "--- Build Logs (last 100 lines) ---"
+              gcloud builds log "$BUILD_ID" \
+                --project "${{ env.GCP_PROJECT_ID }}" \
+                --limit 100 || true
+            else
+              echo "⚠️  Could not find build ID. Checking recent builds..."
+              gcloud builds list \
+                --project "${{ env.GCP_PROJECT_ID }}" \
+                --limit 5 \
+                --format="table(id,status,createTime,source.repoSource.branchName)" || true
+            fi
+            
+            echo ""
+            echo "=== Cloud Run Service Status ==="
+            gcloud run services describe backend-api \
+              --region "${{ env.GCP_REGION }}" \
+              --project "${{ env.GCP_PROJECT_ID }}" \
+              --format="yaml" || echo "⚠️  Service may not exist yet"
+            
+            echo ""
+            echo "=== Cloud Run Revision Logs ==="
+            LATEST_REVISION=$(gcloud run revisions list \
+              --service=backend-api \
+              --region="${{ env.GCP_REGION }}" \
+              --project="${{ env.GCP_PROJECT_ID }}" \
+              --format="value(name)" \
+              --limit=1) || echo ""
+            
+            if [ -n "$LATEST_REVISION" ]; then
+              echo "Latest revision: $LATEST_REVISION"
+              echo ""
+              echo "--- Recent logs (last 50) ---"
+              gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=backend-api AND resource.labels.revision_name=$LATEST_REVISION" \
+                --limit 50 \
+                --project "${{ env.GCP_PROJECT_ID }}" \
+                --format="table(timestamp,severity,textPayload,jsonPayload.message)" || true
+            else
+              echo "--- Recent logs (last 50) ---"
+              gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=backend-api" \
+                --limit 50 \
+                --project "${{ env.GCP_PROJECT_ID }}" \
+                --format="table(timestamp,severity,textPayload,jsonPayload.message)" || true
+            fi
+            
+            echo ""
+            echo "=== Logs URLs ==="
+            echo "Cloud Build Logs:"
+            echo "https://console.cloud.google.com/cloud-build/builds?project=${{ env.GCP_PROJECT_ID }}"
+            echo ""
+            echo "Cloud Run Logs:"
+            echo "https://console.cloud.google.com/logs/query?project=${{ env.GCP_PROJECT_ID }}&query=resource.type%3D%22cloud_run_revision%22%0Aresource.labels.service_name%3D%22backend-api%22"
+            exit 1
+          fi
+          
+          echo "✅ Deployment successful. Setting traffic to latest revision..."
+          gcloud run services update backend-api \
+            --region "${{ env.GCP_REGION }}" \
+            --project "${{ env.GCP_PROJECT_ID }}" \
+            --traffic-latest
+
+      - name: Get service URL
+        run: |
+          SERVICE_URL=$(gcloud run services describe backend-api \
+            --region "${{ env.GCP_REGION }}" \
+            --project "${{ env.GCP_PROJECT_ID }}" \
+            --format 'value(status.url)')
+          echo "✅ Backend API deployed at: $SERVICE_URL"
+          echo "::set-output name=url::$SERVICE_URL"
+
