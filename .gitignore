@@ -1,1 +1,4 @@
 **/.venv/
+# Google Cloud Service Account Keys
+hackathon-*.json
+*-*.json

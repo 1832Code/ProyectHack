@@ -1,4 +1,4 @@
-name: Deploy Hackathon to Cloud Run
+name: Deploy Hackathon Services to Cloud Run
 
 on:
   push:
@@ -7,38 +7,65 @@ on:
       - master
     paths:
       - 'hackathon/**'
+      - '.github/workflows/deploy-hackathon.yml'
   pull_request:
     branches:
       - main
       - master
     paths:
       - 'hackathon/**'
+      - '.github/workflows/deploy-hackathon.yml'
   workflow_dispatch:
 
 env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   GCP_REGION: ${{ secrets.GCP_REGION || 'us-central1' }}
-  CLOUD_RUN_JOB_NAME: ${{ secrets.CLOUD_RUN_JOB_NAME || 'instagram-search' }}
   APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
+  DEBUG: ${{ secrets.DEBUG || '' }}
 
 jobs:
-  deploy:
-    name: Deploy to Cloud Run Jobs
+  deploy-company-lookup:
+    name: Deploy Company Lookup API
     runs-on: ubuntu-latest
     
-    # Solo desplegar en push a main/master, no en PRs
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Prepare Google Service Account JSON
+        id: prepare-json
+        run: |
+          SECRET_VALUE="${{ secrets.GOOGLE_JSON }}"
+          if [ -z "$SECRET_VALUE" ]; then
+            echo "❌ Error: GOOGLE_JSON secret is empty or not set"
+            exit 1
+          fi
+          if echo "$SECRET_VALUE" | base64 -d > /tmp/gcp-sa-key.json 2>/dev/null && [ -s /tmp/gcp-sa-key.json ]; then
+            echo "✅ Decoded from base64"
+          else
+            echo "$SECRET_VALUE" > /tmp/gcp-sa-key.json
+            echo "✅ Used as plain JSON"
+          fi
+          if [ ! -s /tmp/gcp-sa-key.json ]; then
+            echo "❌ Error: Failed to prepare credentials file"
+            exit 1
+          fi
+          delimiter="EOF_$(date +%s)_$$"
+          echo "credentials_json<<${delimiter}" >> $GITHUB_OUTPUT
+          cat /tmp/gcp-sa-key.json >> $GITHUB_OUTPUT
+          echo "${delimiter}" >> $GITHUB_OUTPUT
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ steps.prepare-json.outputs.credentials_json }}
+
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-          export_default_credentials: true
 
       - name: Enable required APIs
         run: |
@@ -46,26 +73,313 @@ jobs:
           gcloud services enable cloudbuild.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
           gcloud services enable artifactregistry.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
 
-      - name: Deploy to Cloud Run Jobs
-        working-directory: ./hackathon
+      - name: Grant required permissions to service account
+        continue-on-error: true
         run: |
-          echo "Deploying Cloud Run Job: ${{ env.CLOUD_RUN_JOB_NAME }}"
-          gcloud run jobs deploy "${{ env.CLOUD_RUN_JOB_NAME }}" \
+          SA_EMAIL=$(gcloud config get-value account 2>/dev/null)
+          PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
+          
+          echo "Attempting to grant permissions to: $SA_EMAIL"
+          echo "Project: $PROJECT_ID"
+          echo ""
+          
+          echo "Granting Cloud Run Admin role..."
+          gcloud projects add-iam-policy-binding $PROJECT_ID \
+            --member="serviceAccount:$SA_EMAIL" \
+            --role="roles/run.admin" \
+            --condition=None || echo "⚠️  Could not grant Cloud Run Admin (may already have it or insufficient permissions)"
+          
+          echo "Granting Service Account User role..."
+          gcloud projects add-iam-policy-binding $PROJECT_ID \
+            --member="serviceAccount:$SA_EMAIL" \
+            --role="roles/iam.serviceAccountUser" \
+            --condition=None || echo "⚠️  Could not grant Service Account User (may already have it or insufficient permissions)"
+          
+          echo "Granting Cloud Build Editor role..."
+          gcloud projects add-iam-policy-binding $PROJECT_ID \
+            --member="serviceAccount:$SA_EMAIL" \
+            --role="roles/cloudbuild.builds.editor" \
+            --condition=None || echo "⚠️  Could not grant Cloud Build Editor (may already have it or insufficient permissions)"
+          
+          echo ""
+          echo "✅ Permission grant attempt completed. Waiting 10 seconds for propagation..."
+          sleep 10
+
+      - name: Deploy Company Lookup Service
+        working-directory: ./hackathon
+        env:
+          APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
+          DEBUG: ${{ secrets.DEBUG }}
+        run: |
+          echo "Deploying Company Lookup API to Cloud Run..."
+          
+          echo "=== Verifying source code ==="
+          echo "Checking api_company_lookup.py..."
+          if ! grep -q "def get_apify_client" src/api_company_lookup.py; then
+            echo "❌ ERROR: get_apify_client function not found in source!"
+            exit 1
+          fi
+          if grep -q "NotImplementedError" src/api_company_lookup.py; then
+            echo "❌ ERROR: NotImplementedError found in source!"
+            exit 1
+          fi
+          echo "✅ Source code verified - no NotImplementedError found"
+          
+          cp Dockerfile.company Dockerfile
+          
+          ENV_VARS="APIFY_API_TOKEN=${APIFY_API_TOKEN}"
+          
+          if [ -n "${DEBUG}" ]; then
+            ENV_VARS="${ENV_VARS},DEBUG=${DEBUG}"
+          fi
+          
+          echo "✅ Environment variables configured (APIFY_API_TOKEN is set)"
+          
+          echo "Building and deploying to Cloud Run..."
+          echo "Forcing rebuild by adding timestamp to Dockerfile..."
+          echo "# Build timestamp: $(date +%s)" >> Dockerfile
+          
+          if ! gcloud run deploy company-lookup-api \
             --source . \
             --region "${{ env.GCP_REGION }}" \
-            --set-env-vars "APIFY_API_TOKEN=${{ env.APIFY_API_TOKEN }}" \
-            --max-retries 1 \
-            --task-timeout 3600 \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars "${ENV_VARS}" \
+            --memory 2Gi \
             --cpu 2 \
-            --memory 4Gi \
-            --project "${{ env.GCP_PROJECT_ID }}"
+            --timeout 3600 \
+            --max-instances 10 \
+            --project "${{ env.GCP_PROJECT_ID }}" \
+            --no-traffic; then
+            echo "❌ Deployment failed. Checking logs..."
+            gcloud run services describe company-lookup-api \
+              --region "${{ env.GCP_REGION }}" \
+              --project "${{ env.GCP_PROJECT_ID }}" \
+              --format="yaml" || true
+            echo ""
+            echo ""
+            echo "=== Cloud Run Logs ==="
+            LATEST_REVISION=$(gcloud run revisions list \
+              --service=company-lookup-api \
+              --region="${{ env.GCP_REGION }}" \
+              --project="${{ env.GCP_PROJECT_ID }}" \
+              --format="value(name)" \
+              --limit=1) || echo ""
+            
+            if [ -n "$LATEST_REVISION" ]; then
+              echo "Latest revision: $LATEST_REVISION"
+              echo ""
+              echo "--- Recent logs (last 50) ---"
+              gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=company-lookup-api AND resource.labels.revision_name=$LATEST_REVISION" \
+                --limit 50 \
+                --project "${{ env.GCP_PROJECT_ID }}" \
+                --format="table(timestamp,severity,textPayload,jsonPayload.message)" || true
+            else
+              echo "--- Recent logs (last 50) ---"
+              gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=company-lookup-api" \
+                --limit 50 \
+                --project "${{ env.GCP_PROJECT_ID }}" \
+                --format="table(timestamp,severity,textPayload,jsonPayload.message)" || true
+            fi
+            
+            echo ""
+            echo "=== Logs URL ==="
+            echo "View logs in Cloud Console:"
+            echo "https://console.cloud.google.com/logs/query?project=${{ env.GCP_PROJECT_ID }}&query=resource.type%3D%22cloud_run_revision%22%0Aresource.labels.service_name%3D%22company-lookup-api%22"
+            exit 1
+          fi
+          
+          rm -f Dockerfile
+          
 
-      - name: Deployment summary
+      - name: Get service URL
         run: |
-          echo "✅ Deployment successful!"
-          echo "Job name: ${{ env.CLOUD_RUN_JOB_NAME }}"
-          echo "Region: ${{ env.GCP_REGION }}"
-          echo "Project: ${{ env.GCP_PROJECT_ID }}"
+          SERVICE_URL=$(gcloud run services describe company-lookup-api \
+            --region "${{ env.GCP_REGION }}" \
+            --project "${{ env.GCP_PROJECT_ID }}" \
+            --format 'value(status.url)')
+          echo "✅ Company Lookup API deployed at: $SERVICE_URL"
+          echo "::set-output name=url::$SERVICE_URL"
+
+  deploy-google-search:
+    name: Deploy Google Search API
+    runs-on: ubuntu-latest
+    
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Prepare Google Service Account JSON
+        id: prepare-json
+        run: |
+          SECRET_VALUE="${{ secrets.GOOGLE_JSON }}"
+          if [ -z "$SECRET_VALUE" ]; then
+            echo "❌ Error: GOOGLE_JSON secret is empty or not set"
+            exit 1
+          fi
+          if echo "$SECRET_VALUE" | base64 -d > /tmp/gcp-sa-key.json 2>/dev/null && [ -s /tmp/gcp-sa-key.json ]; then
+            echo "✅ Decoded from base64"
+          else
+            echo "$SECRET_VALUE" > /tmp/gcp-sa-key.json
+            echo "✅ Used as plain JSON"
+          fi
+          if [ ! -s /tmp/gcp-sa-key.json ]; then
+            echo "❌ Error: Failed to prepare credentials file"
+            exit 1
+          fi
+          delimiter="EOF_$(date +%s)_$$"
+          echo "credentials_json<<${delimiter}" >> $GITHUB_OUTPUT
+          cat /tmp/gcp-sa-key.json >> $GITHUB_OUTPUT
+          echo "${delimiter}" >> $GITHUB_OUTPUT
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ steps.prepare-json.outputs.credentials_json }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Enable required APIs
+        run: |
+          gcloud services enable run.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
+          gcloud services enable cloudbuild.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
+          gcloud services enable artifactregistry.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
+
+      - name: Deploy Google Search Service
+        working-directory: ./hackathon
+        env:
+          APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
+          DEBUG: ${{ secrets.DEBUG }}
+        run: |
+          echo "Deploying Google Search API to Cloud Run..."
+          
+          cp Dockerfile.google Dockerfile
+          
+          ENV_VARS="APIFY_API_TOKEN=${APIFY_API_TOKEN}"
+          
+          if [ -n "${DEBUG}" ]; then
+            ENV_VARS="${ENV_VARS},DEBUG=${DEBUG}"
+          fi
+          
+          echo "Building and deploying to Cloud Run..."
+          gcloud run deploy google-search-api \
+            --source . \
+            --region "${{ env.GCP_REGION }}" \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars "${ENV_VARS}" \
+            --memory 2Gi \
+            --cpu 2 \
+            --timeout 3600 \
+            --max-instances 10 \
+            --project "${{ env.GCP_PROJECT_ID }}"
+          
+          rm -f Dockerfile
+          
+
+      - name: Get service URL
+        run: |
+          SERVICE_URL=$(gcloud run services describe google-search-api \
+            --region "${{ env.GCP_REGION }}" \
+            --project "${{ env.GCP_PROJECT_ID }}" \
+            --format 'value(status.url)')
+          echo "✅ Google Search API deployed at: $SERVICE_URL"
+          echo "::set-output name=url::$SERVICE_URL"
+
+  deploy-instagram-search:
+    name: Deploy Instagram Search API
+    runs-on: ubuntu-latest
+    
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Prepare Google Service Account JSON
+        id: prepare-json
+        run: |
+          SECRET_VALUE="${{ secrets.GOOGLE_JSON }}"
+          if [ -z "$SECRET_VALUE" ]; then
+            echo "❌ Error: GOOGLE_JSON secret is empty or not set"
+            exit 1
+          fi
+          if echo "$SECRET_VALUE" | base64 -d > /tmp/gcp-sa-key.json 2>/dev/null && [ -s /tmp/gcp-sa-key.json ]; then
+            echo "✅ Decoded from base64"
+          else
+            echo "$SECRET_VALUE" > /tmp/gcp-sa-key.json
+            echo "✅ Used as plain JSON"
+          fi
+          if [ ! -s /tmp/gcp-sa-key.json ]; then
+            echo "❌ Error: Failed to prepare credentials file"
+            exit 1
+          fi
+          delimiter="EOF_$(date +%s)_$$"
+          echo "credentials_json<<${delimiter}" >> $GITHUB_OUTPUT
+          cat /tmp/gcp-sa-key.json >> $GITHUB_OUTPUT
+          echo "${delimiter}" >> $GITHUB_OUTPUT
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ steps.prepare-json.outputs.credentials_json }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Enable required APIs
+        run: |
+          gcloud services enable run.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
+          gcloud services enable cloudbuild.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
+          gcloud services enable artifactregistry.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
+
+      - name: Deploy Instagram Search Service
+        working-directory: ./hackathon
+        env:
+          APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
+          DEBUG: ${{ secrets.DEBUG }}
+        run: |
+          echo "Deploying Instagram Search API to Cloud Run..."
+          
+          cp Dockerfile.instagram Dockerfile
+          
+          ENV_VARS="APIFY_API_TOKEN=${APIFY_API_TOKEN}"
+          
+          if [ -n "${DEBUG}" ]; then
+            ENV_VARS="${ENV_VARS},DEBUG=${DEBUG}"
+          fi
+          
+          echo "Building and deploying to Cloud Run..."
+          gcloud run deploy instagram-search-api \
+            --source . \
+            --region "${{ env.GCP_REGION }}" \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars "${ENV_VARS}" \
+            --memory 2Gi \
+            --cpu 2 \
+            --timeout 3600 \
+            --max-instances 10 \
+            --project "${{ env.GCP_PROJECT_ID }}"
+          
+          rm -f Dockerfile
+          
+
+      - name: Get service URL
+        run: |
+          SERVICE_URL=$(gcloud run services describe instagram-search-api \
+            --region "${{ env.GCP_REGION }}" \
+            --project "${{ env.GCP_PROJECT_ID }}" \
+            --format 'value(status.url)')
+          echo "✅ Instagram Search API deployed at: $SERVICE_URL"
+          echo "::set-output name=url::$SERVICE_URL"
 
   validate:
     name: Validate deployment configuration
@@ -100,9 +414,39 @@ jobs:
             echo "❌ src directory not found"
             exit 1
           fi
-          if [ ! -f src/main.py ]; then
-            echo "❌ src/main.py not found"
+          echo "✅ Source code structure valid"
+      
+      - name: Validate API files
+        working-directory: ./hackathon
+        run: |
+          if [ ! -f src/api_company_lookup.py ]; then
+            echo "❌ src/api_company_lookup.py not found"
             exit 1
           fi
-          echo "✅ Source code structure valid"
+          if [ ! -f src/api_google_search.py ]; then
+            echo "❌ src/api_google_search.py not found"
+            exit 1
+          fi
+          if [ ! -f src/api_instagram_search.py ]; then
+            echo "❌ src/api_instagram_search.py not found"
+            exit 1
+          fi
+          echo "✅ All API files found"
+      
+      - name: Validate Dockerfiles
+        working-directory: ./hackathon
+        run: |
+          if [ ! -f Dockerfile.company ]; then
+            echo "❌ Dockerfile.company not found"
+            exit 1
+          fi
+          if [ ! -f Dockerfile.google ]; then
+            echo "❌ Dockerfile.google not found"
+            exit 1
+          fi
+          if [ ! -f Dockerfile.instagram ]; then
+            echo "❌ Dockerfile.instagram not found"
+            exit 1
+          fi
+          echo "✅ All Dockerfiles found"
 

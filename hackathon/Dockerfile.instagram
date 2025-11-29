@@ -1,0 +1,21 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY src/ ./src/
+
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+ENV API_MODULE=api_instagram_search
+
+ENV PORT=8080
+
+# Expose port (Cloud Run will set PORT env var)
+EXPOSE 8080
+
+# Run the API server (PORT env var is set by Cloud Run)
+CMD python -m uvicorn src.api_instagram_search:app --host 0.0.0.0 --port $PORT
+
