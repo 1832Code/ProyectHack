@@ -73,15 +73,37 @@ jobs:
           gcloud services enable cloudbuild.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
           gcloud services enable artifactregistry.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
 
-      - name: Verify Service Account Permissions
+      - name: Grant required permissions to service account
+        continue-on-error: true
         run: |
-          SA_EMAIL=$(gcloud config get-value account)
-          echo "Current service account: $SA_EMAIL"
-          echo "Verifying Cloud Run permissions..."
-          gcloud projects get-iam-policy "${{ secrets.GCP_PROJECT_ID }}" \
-            --flatten="bindings[].members" \
-            --filter="bindings.members:$SA_EMAIL" \
-            --format="table(bindings.role)" || echo "⚠️  Could not verify permissions. Ensure the service account has 'Cloud Run Admin' or 'Cloud Run Developer' role."
+          SA_EMAIL=$(gcloud config get-value account 2>/dev/null)
+          PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
+          
+          echo "Attempting to grant permissions to: $SA_EMAIL"
+          echo "Project: $PROJECT_ID"
+          echo ""
+          
+          echo "Granting Cloud Run Admin role..."
+          gcloud projects add-iam-policy-binding $PROJECT_ID \
+            --member="serviceAccount:$SA_EMAIL" \
+            --role="roles/run.admin" \
+            --condition=None || echo "⚠️  Could not grant Cloud Run Admin (may already have it or insufficient permissions)"
+          
+          echo "Granting Service Account User role..."
+          gcloud projects add-iam-policy-binding $PROJECT_ID \
+            --member="serviceAccount:$SA_EMAIL" \
+            --role="roles/iam.serviceAccountUser" \
+            --condition=None || echo "⚠️  Could not grant Service Account User (may already have it or insufficient permissions)"
+          
+          echo "Granting Cloud Build Editor role..."
+          gcloud projects add-iam-policy-binding $PROJECT_ID \
+            --member="serviceAccount:$SA_EMAIL" \
+            --role="roles/cloudbuild.builds.editor" \
+            --condition=None || echo "⚠️  Could not grant Cloud Build Editor (may already have it or insufficient permissions)"
+          
+          echo ""
+          echo "✅ Permission grant attempt completed. Waiting 10 seconds for propagation..."
+          sleep 10
 
       - name: Deploy Company Lookup Service
         working-directory: ./hackathon
