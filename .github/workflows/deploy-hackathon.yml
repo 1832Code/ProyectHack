@@ -109,7 +109,6 @@ jobs:
           
           echo "=== Verifying source code ==="
           echo "Checking api_company_lookup.py..."
-          if ! grep -q "def get_client" src/api_company_lookup.py; then
           
           cp Dockerfile.company Dockerfile
           
