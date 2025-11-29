@@ -83,10 +83,18 @@ jobs:
           
           IMAGE_NAME="gcr.io/${{ env.GCP_PROJECT_ID }}/company-lookup-api"
           
+          echo "Creating cloudbuild.yaml..."
+          cat > cloudbuild-temp.yaml <<EOF
+          steps:
+          - name: 'gcr.io/cloud-builders/docker'
+            args: ['build', '-f', 'Dockerfile.company', '-t', '${IMAGE_NAME}', '.']
+          images:
+          - '${IMAGE_NAME}'
+          EOF
+          
           echo "Building Docker image..."
           gcloud builds submit \
-            --tag "${IMAGE_NAME}" \
-            --dockerfile Dockerfile.company \
+            --config cloudbuild-temp.yaml \
             --project "${{ env.GCP_PROJECT_ID }}"
           
           ENV_VARS="APIFY_API_TOKEN=${APIFY_API_TOKEN}"
@@ -176,10 +184,18 @@ jobs:
           
           IMAGE_NAME="gcr.io/${{ env.GCP_PROJECT_ID }}/google-search-api"
           
+          echo "Creating cloudbuild.yaml..."
+          cat > cloudbuild-temp.yaml <<EOF
+          steps:
+          - name: 'gcr.io/cloud-builders/docker'
+            args: ['build', '-f', 'Dockerfile.google', '-t', '${IMAGE_NAME}', '.']
+          images:
+          - '${IMAGE_NAME}'
+          EOF
+          
           echo "Building Docker image..."
           gcloud builds submit \
-            --tag "${IMAGE_NAME}" \
-            --dockerfile Dockerfile.google \
+            --config cloudbuild-temp.yaml \
             --project "${{ env.GCP_PROJECT_ID }}"
           
           ENV_VARS="APIFY_API_TOKEN=${APIFY_API_TOKEN}"
@@ -269,10 +285,18 @@ jobs:
           
           IMAGE_NAME="gcr.io/${{ env.GCP_PROJECT_ID }}/instagram-search-api"
           
+          echo "Creating cloudbuild.yaml..."
+          cat > cloudbuild-temp.yaml <<EOF
+          steps:
+          - name: 'gcr.io/cloud-builders/docker'
+            args: ['build', '-f', 'Dockerfile.instagram', '-t', '${IMAGE_NAME}', '.']
+          images:
+          - '${IMAGE_NAME}'
+          EOF
+          
           echo "Building Docker image..."
           gcloud builds submit \
-            --tag "${IMAGE_NAME}" \
-            --dockerfile Dockerfile.instagram \
+            --config cloudbuild-temp.yaml \
             --project "${{ env.GCP_PROJECT_ID }}"
           
           ENV_VARS="APIFY_API_TOKEN=${APIFY_API_TOKEN}"
