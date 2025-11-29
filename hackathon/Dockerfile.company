@@ -2,6 +2,11 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+ARG BUILD_DATE=unknown
+ARG BUILD_VERSION=1.0.0
+ENV BUILD_DATE=${BUILD_DATE}
+ENV BUILD_VERSION=${BUILD_VERSION}
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
@@ -10,7 +15,11 @@ COPY src/ ./src/
 RUN echo "=== Verifying source structure ===" && \
     ls -la /app/src/ && \
     echo "=== Verifying api_company_lookup.py exists ===" && \
-    test -f /app/src/api_company_lookup.py && echo "✅ api_company_lookup.py found" || echo "❌ api_company_lookup.py NOT FOUND"
+    test -f /app/src/api_company_lookup.py && echo "✅ api_company_lookup.py found" || echo "❌ api_company_lookup.py NOT FOUND" && \
+    echo "=== Checking get_apify_client function ===" && \
+    grep -n "def get_apify_client" /app/src/api_company_lookup.py && \
+    echo "=== Verifying no NotImplementedError ===" && \
+    (! grep -q "NotImplementedError" /app/src/api_company_lookup.py && echo "✅ No NotImplementedError found") || (echo "❌ NotImplementedError found!" && grep -n "NotImplementedError" /app/src/api_company_lookup.py)
 
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1

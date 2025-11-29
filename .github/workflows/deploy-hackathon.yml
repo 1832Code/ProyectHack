@@ -113,6 +113,18 @@ jobs:
         run: |
           echo "Deploying Company Lookup API to Cloud Run..."
           
+          echo "=== Verifying source code ==="
+          echo "Checking api_company_lookup.py..."
+          if ! grep -q "def get_apify_client" src/api_company_lookup.py; then
+            echo "❌ ERROR: get_apify_client function not found in source!"
+            exit 1
+          fi
+          if grep -q "NotImplementedError" src/api_company_lookup.py; then
+            echo "❌ ERROR: NotImplementedError found in source!"
+            exit 1
+          fi
+          echo "✅ Source code verified - no NotImplementedError found"
+          
           cp Dockerfile.company Dockerfile
           
           ENV_VARS="APIFY_API_TOKEN=${APIFY_API_TOKEN}"
@@ -121,7 +133,12 @@ jobs:
             ENV_VARS="${ENV_VARS},DEBUG=${DEBUG}"
           fi
           
+          echo "✅ Environment variables configured (APIFY_API_TOKEN is set)"
+          
           echo "Building and deploying to Cloud Run..."
+          echo "Forcing rebuild by adding timestamp to Dockerfile..."
+          echo "# Build timestamp: $(date +%s)" >> Dockerfile
+          
           if ! gcloud run deploy company-lookup-api \
             --source . \
             --region "${{ env.GCP_REGION }}" \
