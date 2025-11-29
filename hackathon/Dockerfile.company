@@ -9,12 +9,8 @@ COPY src/ ./src/
 
 RUN echo "=== Verifying source structure ===" && \
     ls -la /app/src/ && \
-    echo "=== Checking modules directory ===" && \
-    ls -la /app/src/modules/ && \
-    echo "=== Verifying lookup_company.py exists ===" && \
-    test -f /app/src/modules/lookup_company.py && echo "✅ lookup_company.py found" || echo "❌ lookup_company.py NOT FOUND" && \
-    echo "=== Python import test ===" && \
-    python -c "import sys; sys.path.insert(0, '/app'); from modules.lookup_company import get_apify_client; print('✅ Import successful')" || echo "❌ Import failed"
+    echo "=== Verifying api_company_lookup.py exists ===" && \
+    test -f /app/src/api_company_lookup.py && echo "✅ api_company_lookup.py found" || echo "❌ api_company_lookup.py NOT FOUND"
 
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
