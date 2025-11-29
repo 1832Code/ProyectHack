@@ -5,13 +5,14 @@ import json
 import mysql.connector
 from mysql.connector import Error
 from openai import OpenAI
+from decouple import config
 
 app = Flask(__name__)
 CORS(app)
 
 
 # ==================== CONFIGURACIÓN ====================
-DEEPSEEK_API_KEY = os.getenv('DEEPSEEK_API_KEY', 'tu-api-key-aqui')
+DEEPSEEK_API_KEY = os.getenv('DEEPSEEK_API_KEY', config('DEEPSEEK_API_KEY'))
 client = OpenAI(
     api_key=DEEPSEEK_API_KEY,
     base_url="https://api.deepseek.com"
