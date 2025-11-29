@@ -50,7 +50,7 @@ export function SearchScreen() {
 
     if (!validate()) return
 
-    router.push("/dashboard")
+    router.push("/panel")
   }
 
   return (

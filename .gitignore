@@ -2,3 +2,9 @@
 # Google Cloud Service Account Keys
 hackathon-*.json
 *-*.json
+
+frontend/node_modules
+frontend/.next
+frontend/out
+frontend/.env.local
+.DS_Store
