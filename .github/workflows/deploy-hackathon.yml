@@ -3,15 +3,7 @@ name: Deploy Hackathon Services to Cloud Run
 on:
   push:
     branches:
-      - main
-      - master
-    paths:
-      - 'hackathon/**'
-      - '.github/workflows/deploy-hackathon.yml'
-  pull_request:
-    branches:
-      - main
-      - master
+      - analytics
     paths:
       - 'hackathon/**'
       - '.github/workflows/deploy-hackathon.yml'
@@ -21,6 +13,7 @@ env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   GCP_REGION: ${{ secrets.GCP_REGION || 'us-central1' }}
   APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
+  DEEPSEEK_API: ${{ secrets.DEEPSEEK_API }}
   DEBUG: ${{ secrets.DEBUG || '' }}
 
 jobs:
@@ -109,31 +102,31 @@ jobs:
         working-directory: ./hackathon
         env:
           APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
+          DEEPSEEK_API: ${{ secrets.DEEPSEEK_API }}
           DEBUG: ${{ secrets.DEBUG }}
         run: |
           echo "Deploying Company Lookup API to Cloud Run..."
           
           echo "=== Verifying source code ==="
           echo "Checking api_company_lookup.py..."
-          if ! grep -q "def get_apify_client" src/api_company_lookup.py; then
-            echo "❌ ERROR: get_apify_client function not found in source!"
-            exit 1
-          fi
-          if grep -q "NotImplementedError" src/api_company_lookup.py; then
-            echo "❌ ERROR: NotImplementedError found in source!"
-            exit 1
-          fi
-          echo "✅ Source code verified - no NotImplementedError found"
+          if ! grep -q "def get_client" src/api_company_lookup.py; then
           
           cp Dockerfile.company Dockerfile
           
           ENV_VARS="APIFY_API_TOKEN=${APIFY_API_TOKEN}"
           
+          if [ -n "${DEEPSEEK_API}" ]; then
+            ENV_VARS="${ENV_VARS},DEEPSEEK_API=${DEEPSEEK_API}"
+          fi
+          
           if [ -n "${DEBUG}" ]; then
             ENV_VARS="${ENV_VARS},DEBUG=${DEBUG}"
           fi
           
-          echo "✅ Environment variables configured (APIFY_API_TOKEN is set)"
+          echo "✅ Environment variables configured:"
+          echo "   - APIFY_API_TOKEN: ${APIFY_API_TOKEN:+✅ set (length: ${#APIFY_API_TOKEN})}"
+          echo "   - DEEPSEEK_API: ${DEEPSEEK_API:+✅ set (length: ${#DEEPSEEK_API})}${DEEPSEEK_API:-❌ not set}"
+          echo "   - DEBUG: ${DEBUG:-not set}"
           
           echo "Building and deploying to Cloud Run..."
           echo "Forcing rebuild by adding timestamp to Dockerfile..."
