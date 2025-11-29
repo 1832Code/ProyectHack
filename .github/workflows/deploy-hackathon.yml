@@ -37,16 +37,24 @@ jobs:
       - name: Prepare Google Service Account JSON
         id: prepare-json
         run: |
-          if echo "${{ secrets.GOOGLE_JSON }}" | base64 -d > /tmp/gcp-sa-key.json 2>/dev/null && [ -s /tmp/gcp-sa-key.json ]; then
+          SECRET_VALUE="${{ secrets.GOOGLE_JSON }}"
+          if [ -z "$SECRET_VALUE" ]; then
+            echo "❌ Error: GOOGLE_JSON secret is empty or not set"
+            exit 1
+          fi
+          if echo "$SECRET_VALUE" | base64 -d > /tmp/gcp-sa-key.json 2>/dev/null && [ -s /tmp/gcp-sa-key.json ]; then
             echo "✅ Decoded from base64"
           else
-            echo "${{ secrets.GOOGLE_JSON }}" > /tmp/gcp-sa-key.json
+            echo "$SECRET_VALUE" > /tmp/gcp-sa-key.json
             echo "✅ Used as plain JSON"
           fi
-          CREDENTIALS_CONTENT=$(cat /tmp/gcp-sa-key.json)
-          delimiter="CREDENTIALS_$(date +%s)_$$"
+          if [ ! -s /tmp/gcp-sa-key.json ]; then
+            echo "❌ Error: Failed to prepare credentials file"
+            exit 1
+          fi
+          delimiter="EOF_$(date +%s)_$$"
           echo "credentials_json<<${delimiter}" >> $GITHUB_OUTPUT
-          echo "$CREDENTIALS_CONTENT" >> $GITHUB_OUTPUT
+          cat /tmp/gcp-sa-key.json >> $GITHUB_OUTPUT
           echo "${delimiter}" >> $GITHUB_OUTPUT
 
       - name: Authenticate to Google Cloud
@@ -122,16 +130,24 @@ jobs:
       - name: Prepare Google Service Account JSON
         id: prepare-json
         run: |
-          if echo "${{ secrets.GOOGLE_JSON }}" | base64 -d > /tmp/gcp-sa-key.json 2>/dev/null && [ -s /tmp/gcp-sa-key.json ]; then
+          SECRET_VALUE="${{ secrets.GOOGLE_JSON }}"
+          if [ -z "$SECRET_VALUE" ]; then
+            echo "❌ Error: GOOGLE_JSON secret is empty or not set"
+            exit 1
+          fi
+          if echo "$SECRET_VALUE" | base64 -d > /tmp/gcp-sa-key.json 2>/dev/null && [ -s /tmp/gcp-sa-key.json ]; then
             echo "✅ Decoded from base64"
           else
-            echo "${{ secrets.GOOGLE_JSON }}" > /tmp/gcp-sa-key.json
+            echo "$SECRET_VALUE" > /tmp/gcp-sa-key.json
             echo "✅ Used as plain JSON"
           fi
-          CREDENTIALS_CONTENT=$(cat /tmp/gcp-sa-key.json)
-          delimiter="CREDENTIALS_$(date +%s)_$$"
+          if [ ! -s /tmp/gcp-sa-key.json ]; then
+            echo "❌ Error: Failed to prepare credentials file"
+            exit 1
+          fi
+          delimiter="EOF_$(date +%s)_$$"
           echo "credentials_json<<${delimiter}" >> $GITHUB_OUTPUT
-          echo "$CREDENTIALS_CONTENT" >> $GITHUB_OUTPUT
+          cat /tmp/gcp-sa-key.json >> $GITHUB_OUTPUT
           echo "${delimiter}" >> $GITHUB_OUTPUT
 
       - name: Authenticate to Google Cloud
@@ -207,16 +223,24 @@ jobs:
       - name: Prepare Google Service Account JSON
         id: prepare-json
         run: |
-          if echo "${{ secrets.GOOGLE_JSON }}" | base64 -d > /tmp/gcp-sa-key.json 2>/dev/null && [ -s /tmp/gcp-sa-key.json ]; then
+          SECRET_VALUE="${{ secrets.GOOGLE_JSON }}"
+          if [ -z "$SECRET_VALUE" ]; then
+            echo "❌ Error: GOOGLE_JSON secret is empty or not set"
+            exit 1
+          fi
+          if echo "$SECRET_VALUE" | base64 -d > /tmp/gcp-sa-key.json 2>/dev/null && [ -s /tmp/gcp-sa-key.json ]; then
             echo "✅ Decoded from base64"
           else
-            echo "${{ secrets.GOOGLE_JSON }}" > /tmp/gcp-sa-key.json
+            echo "$SECRET_VALUE" > /tmp/gcp-sa-key.json
             echo "✅ Used as plain JSON"
           fi
-          CREDENTIALS_CONTENT=$(cat /tmp/gcp-sa-key.json)
-          delimiter="CREDENTIALS_$(date +%s)_$$"
+          if [ ! -s /tmp/gcp-sa-key.json ]; then
+            echo "❌ Error: Failed to prepare credentials file"
+            exit 1
+          fi
+          delimiter="EOF_$(date +%s)_$$"
           echo "credentials_json<<${delimiter}" >> $GITHUB_OUTPUT
-          echo "$CREDENTIALS_CONTENT" >> $GITHUB_OUTPUT
+          cat /tmp/gcp-sa-key.json >> $GITHUB_OUTPUT
           echo "${delimiter}" >> $GITHUB_OUTPUT
 
       - name: Authenticate to Google Cloud
