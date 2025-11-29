@@ -1,0 +1,213 @@
+[
+    {
+      "searchQuery": {
+        "term": "tailoy",
+        "url": "http://www.google.com/search?q=tailoy",
+        "device": "DESKTOP",
+        "page": 1,
+        "type": "SEARCH",
+        "domain": "google.com",
+        "countryCode": "US",
+        "languageCode": null,
+        "locationUule": null,
+        "resultsPerPage": 10
+      },
+      "resultsTotal": 1290000,
+      "relatedQueries": [
+        {
+          "title": "Tai Loy tiendas",
+          "url": "https://www.google.com/search?sca_esv=f9901c6b52e850df&hl=en&rlz=1C1ONGR_enUS1167US1167&q=Tai+Loy+tiendas&sa=X&ved=2ahUKEwiKxMWd6JeRAxVFRTABHXxxEl0Q1QJ6BAgyEAE"
+        },
+        {
+          "title": "Tai Loy wikipedia",
+          "url": "https://www.google.com/search?sca_esv=f9901c6b52e850df&hl=en&rlz=1C1ONGR_enUS1167US1167&q=Tai+Loy+wikipedia&sa=X&ved=2ahUKEwiKxMWd6JeRAxVFRTABHXxxEl0Q1QJ6BAg1EAE"
+        },
+        {
+          "title": "Oechsle",
+          "url": "https://www.google.com/search?sca_esv=f9901c6b52e850df&hl=en&rlz=1C1ONGR_enUS1167US1167&q=Oechsle&sa=X&ved=2ahUKEwiKxMWd6JeRAxVFRTABHXxxEl0Q1QJ6BAg2EAE"
+        },
+        {
+          "title": "Tai Loy Jockey Plaza photos",
+          "url": "https://www.google.com/search?sca_esv=f9901c6b52e850df&hl=en&rlz=1C1ONGR_enUS1167US1167&q=Tai+Loy+Jockey+Plaza+photos&sa=X&ved=2ahUKEwiKxMWd6JeRAxVFRTABHXxxEl0Q1QJ6BAg0EAE"
+        },
+        {
+          "title": "Tailoy trabajo",
+          "url": "https://www.google.com/search?sca_esv=f9901c6b52e850df&hl=en&rlz=1C1ONGR_enUS1167US1167&q=Tailoy+trabajo&sa=X&ved=2ahUKEwiKxMWd6JeRAxVFRTABHXxxEl0Q1QJ6BAgzEAE"
+        },
+        {
+          "title": "Wong",
+          "url": "https://www.google.com/search?sca_esv=f9901c6b52e850df&hl=en&rlz=1C1ONGR_enUS1167US1167&q=Wong&sa=X&ved=2ahUKEwiKxMWd6JeRAxVFRTABHXxxEl0Q1QJ6BAgxEAE"
+        },
+        {
+          "title": "Wong Perú",
+          "url": "https://www.google.com/search?sca_esv=f9901c6b52e850df&hl=en&rlz=1C1ONGR_enUS1167US1167&q=Wong+Per%C3%BA&sa=X&ved=2ahUKEwiKxMWd6JeRAxVFRTABHXxxEl0Q1QJ6BAgwEAE"
+        },
+        {
+          "title": "Juguetes Perú",
+          "url": "https://www.google.com/search?sca_esv=f9901c6b52e850df&hl=en&rlz=1C1ONGR_enUS1167US1167&q=Juguetes+Per%C3%BA&sa=X&ved=2ahUKEwiKxMWd6JeRAxVFRTABHXxxEl0Q1QJ6BAgvEAE"
+        },
+        {
+          "title": "Tai Loy tiendas",
+          "url": "https://www.google.com/search?sca_esv=f9901c6b52e850df&hl=en&rlz=1C1ONGR_enUS1167US1167&q=Tai+Loy+tiendas&sa=X&ved=2ahUKEwiKxMWd6JeRAxVFRTABHXxxEl0Q1QJ6BAgyEAE"
+        },
+        {
+          "title": "Tai Loy wikipedia",
+          "url": "https://www.google.com/search?sca_esv=f9901c6b52e850df&hl=en&rlz=1C1ONGR_enUS1167US1167&q=Tai+Loy+wikipedia&sa=X&ved=2ahUKEwiKxMWd6JeRAxVFRTABHXxxEl0Q1QJ6BAg1EAE"
+        },
+        {
+          "title": "Oechsle",
+          "url": "https://www.google.com/search?sca_esv=f9901c6b52e850df&hl=en&rlz=1C1ONGR_enUS1167US1167&q=Oechsle&sa=X&ved=2ahUKEwiKxMWd6JeRAxVFRTABHXxxEl0Q1QJ6BAg2EAE"
+        },
+        {
+          "title": "Tai Loy Jockey Plaza photos",
+          "url": "https://www.google.com/search?sca_esv=f9901c6b52e850df&hl=en&rlz=1C1ONGR_enUS1167US1167&q=Tai+Loy+Jockey+Plaza+photos&sa=X&ved=2ahUKEwiKxMWd6JeRAxVFRTABHXxxEl0Q1QJ6BAg0EAE"
+        },
+        {
+          "title": "Tailoy trabajo",
+          "url": "https://www.google.com/search?sca_esv=f9901c6b52e850df&hl=en&rlz=1C1ONGR_enUS1167US1167&q=Tailoy+trabajo&sa=X&ved=2ahUKEwiKxMWd6JeRAxVFRTABHXxxEl0Q1QJ6BAgzEAE"
+        },
+        {
+          "title": "Wong",
+          "url": "https://www.google.com/search?sca_esv=f9901c6b52e850df&hl=en&rlz=1C1ONGR_enUS1167US1167&q=Wong&sa=X&ved=2ahUKEwiKxMWd6JeRAxVFRTABHXxxEl0Q1QJ6BAgxEAE"
+        },
+        {
+          "title": "Wong Perú",
+          "url": "https://www.google.com/search?sca_esv=f9901c6b52e850df&hl=en&rlz=1C1ONGR_enUS1167US1167&q=Wong+Per%C3%BA&sa=X&ved=2ahUKEwiKxMWd6JeRAxVFRTABHXxxEl0Q1QJ6BAgwEAE"
+        },
+        {
+          "title": "Juguetes Perú",
+          "url": "https://www.google.com/search?sca_esv=f9901c6b52e850df&hl=en&rlz=1C1ONGR_enUS1167US1167&q=Juguetes+Per%C3%BA&sa=X&ved=2ahUKEwiKxMWd6JeRAxVFRTABHXxxEl0Q1QJ6BAgvEAE"
+        }
+      ],
+      "paidResults": [],
+      "paidProducts": [],
+      "organicResults": [
+        {
+          "title": "Black Week | Hasta 70% dto. en tailoy.com.pe",
+          "url": "https://www.tailoy.com.pe/?srsltid=AfmBOortdyLqRdgFLPZGdu6qOWgmImXWOoJtJt-OIn2CO6zDpgoTyCuv",
+          "displayedUrl": "https://www.tailoy.com.pe",
+          "description": "No te pierdas el Black Week del 24 de noviembre al 1 de diciembre. Disfruta de grandes ofertas, hasta 70% en Juguetes, Tecnología y más.",
+          "emphasizedKeywords": [],
+          "siteLinks": [
+            {
+              "title": "Útiles",
+              "url": "https://www.tailoy.com.pe/escolar/utiles.html?srsltid=AfmBOoqLkqoLVhTSwPSwCu5ADDDNesZqef01qVuewifJkpYj_u0SoKt7",
+              "description": "Útiles · FABER CASTELL. Bolígrafo Faber Castell Trilux ..."
+            },
+            {
+              "title": "Juguetería",
+              "url": "https://www.tailoy.com.pe/jugueteria.html?srsltid=AfmBOopJmgeaV7-yIkSLj5RSI6OsE-z3xzJ7XdPUqggi-VnusW5aFRLb",
+              "description": "Encuentra lo mejor de juguetes para todas las edades. Las ..."
+            },
+            {
+              "title": "Hola Inicia sesión",
+              "url": "https://www.tailoy.com.pe/customer/account/login/?srsltid=AfmBOooqGaRNe5Q8ZfiuJMnj2fDg77xxlwYJZz1F359R9SCN5OVOHlix",
+              "description": "Crear una cuenta tiene muchos beneficios: Paga más rápido ..."
+            },
+            {
+              "title": "Juguetes",
+              "url": "https://www.tailoy.com.pe/colecciones/juguetes.html?srsltid=AfmBOoq1cT3tbn5zq0YBMxxzNjcSTFDKngaRhjCApKmdKMFljEto9WCn",
+              "description": "Juguetes · SPIDERMAN. Figura De Acción Spider-Man Titan ..."
+            },
+            {
+              "title": "Cuidado Personal",
+              "url": "https://www.tailoy.com.pe/electrohogar/cuidado-personal.html?srsltid=AfmBOooQYdbao7i6cdu3WUvnCRKYsDzThGIEXpTgS_uyfuuGwQ1gh_N2",
+              "description": "Cuidado Personal · GA.MA. Rizador Gama Tourmaline ..."
+            },
+            {
+              "title": "More results from tailoy.com.pe »",
+              "url": "https://www.google.com/search?q=tailoy+site:tailoy.com.pe&sca_esv=f9901c6b52e850df&hl=en&rlz=1C1ONGR_enUS1167US1167&sa=X&ved=2ahUKEwiKxMWd6JeRAxVFRTABHXxxEl0QrAN6BAgMEAE",
+              "description": ""
+            }
+          ],
+          "productInfo": {},
+          "type": "organic",
+          "position": 1
+        },
+        {
+          "title": "Black Week en tailoy.com.bo | Hasta 60% dto",
+          "url": "https://www.tailoy.com.bo/",
+          "displayedUrl": "https://www.tailoy.com.bo",
+          "description": "Ver orden y estado de envío; Rastrear historial de orden; Comprar más rápidamente. Crear una cuenta. Completar pedido usando tu cuenta. Correo Electrónico.",
+          "emphasizedKeywords": [
+            "Ver orden y estado de envío"
+          ],
+          "siteLinks": [],
+          "productInfo": {},
+          "type": "organic",
+          "position": 2
+        },
+        {
+          "title": "Tai Loy (@tailoy.oficial)",
+          "url": "https://www.instagram.com/tailoy.oficial/?hl=en",
+          "displayedUrl": "Instagram › tailoy.oficial",
+          "description": "Útiles escolares y de oficina Juguetes, Tecnología, Productos para Bebés TAI LOY S.A. - RUC 20100049181. Links ⬇️. linktr.ee/TaiLoy. Follow. Message.",
+          "emphasizedKeywords": [
+            "Útiles escolares y de oficina"
+          ],
+          "siteLinks": [],
+          "productInfo": {},
+          "followersAmount": "127.8K+ followers",
+          "channelName": "tailoy.oficial",
+          "type": "organic",
+          "position": 3
+        },
+        {
+          "title": "Tai Loy Oficial",
+          "url": "https://linktr.ee/TaiLoy",
+          "displayedUrl": "https://linktr.ee › TaiLoy",
+          "description": "En tailoy.com.pe encontrarás electrodomésticos, tabletas gráficas, juguetes, televisores, cuidado personal y mucho más a buen precio. Join TaiLoy on Linktree.",
+          "emphasizedKeywords": [
+            "tailoy",
+            "TaiLoy"
+          ],
+          "siteLinks": [],
+          "productInfo": {},
+          "type": "organic",
+          "position": 4
+        },
+        {
+          "title": "Tai Loy Bolivia",
+          "url": "https://www.facebook.com/tailoy.bolivia/",
+          "displayedUrl": "Facebook › Tai Loy Bolivia",
+          "description": "¡Tai Loy es el paraíso de las compras! Encontrarás juguetes, tecnología, productos para bebés , útiles escolares, de oficina   y muchos productos más. Comprá ...",
+          "emphasizedKeywords": [
+            "juguetes, tecnología, productos para bebés , útiles escolares, de oficina"
+          ],
+          "siteLinks": [],
+          "productInfo": {},
+          "followersAmount": "15.8K+ followers",
+          "type": "organic",
+          "position": 5
+        },
+        {
+          "title": "Tai Loy (@tailoy.oficial)",
+          "url": "https://www.tiktok.com/@tailoy.oficial?lang=en",
+          "displayedUrl": "TikTok › Tai Loy",
+          "description": "Todo lo que imaginas está en Tai Loy Lima y Provincias Link⬇️ · ¡Atención, TayLovers! · ¡Tu segundo juguete con 50% dto! · ¡Black Week!",
+          "emphasizedKeywords": [
+            "Tai Loy Lima y Provincias"
+          ],
+          "siteLinks": [],
+          "productInfo": {},
+          "followersAmount": "167.9K+ followers",
+          "type": "organic",
+          "position": 6
+        },
+        {
+          "title": "Tai Loy | Tienda Oficial",
+          "url": "https://www.mercadolibre.com.pe/tienda/tai-loy",
+          "displayedUrl": "https://www.mercadolibre.com.pe › ...",
+          "description": "Visita la página y encuentra todos los productos de Tai Loy en un mismo lugar.",
+          "emphasizedKeywords": [
+            "Tai Loy"
+          ],
+          "siteLinks": [],
+          "productInfo": {},
+          "type": "organic",
+          "position": 7
+        }
+      ],
+      "peopleAlsoAsk": []
+    }
+  ]
