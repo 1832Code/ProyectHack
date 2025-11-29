@@ -63,28 +63,14 @@ class HealthResponse(BaseModel):
 _apify_client = None
 
 
-def get_apify_client() -> ApifyClient:
-    """
-    Get Apify client instance using API token from environment.
-    
-    Returns:
-        ApifyClient: Configured Apify client instance
-        
-    Raises:
-        ValueError: If APIFY_API_TOKEN is not set
-    """
-    api_token = os.getenv("APIFY_API_TOKEN")
-    if not api_token:
-        raise ValueError("APIFY_API_TOKEN environment variable is not set")
-    
-    return ApifyClient(api_token)
-
-
 def get_client():
     """Get or create Apify client (singleton)."""
     global _apify_client
     if _apify_client is None:
-        _apify_client = get_apify_client()
+        api_token = os.getenv("APIFY_API_TOKEN")
+        if not api_token:
+            raise ValueError("APIFY_API_TOKEN environment variable is not set")
+        _apify_client = ApifyClient(api_token)
     return _apify_client
 
 
