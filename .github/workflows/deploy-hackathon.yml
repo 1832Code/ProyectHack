@@ -140,7 +140,8 @@ jobs:
               --project "${{ env.GCP_PROJECT_ID }}" \
               --format="yaml" || true
             echo ""
-            echo "Recent logs:"
+            echo ""
+            echo "=== Cloud Run Logs ==="
             LATEST_REVISION=$(gcloud run revisions list \
               --service=company-lookup-api \
               --region="${{ env.GCP_REGION }}" \
@@ -150,16 +151,24 @@ jobs:
             
             if [ -n "$LATEST_REVISION" ]; then
               echo "Latest revision: $LATEST_REVISION"
+              echo ""
+              echo "--- Recent logs (last 50) ---"
               gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=company-lookup-api AND resource.labels.revision_name=$LATEST_REVISION" \
-                --limit 100 \
+                --limit 50 \
                 --project "${{ env.GCP_PROJECT_ID }}" \
                 --format="table(timestamp,severity,textPayload,jsonPayload.message)" || true
             else
+              echo "--- Recent logs (last 50) ---"
               gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=company-lookup-api" \
-                --limit 100 \
+                --limit 50 \
                 --project "${{ env.GCP_PROJECT_ID }}" \
                 --format="table(timestamp,severity,textPayload,jsonPayload.message)" || true
             fi
+            
+            echo ""
+            echo "=== Logs URL ==="
+            echo "View logs in Cloud Console:"
+            echo "https://console.cloud.google.com/logs/query?project=${{ env.GCP_PROJECT_ID }}&query=resource.type%3D%22cloud_run_revision%22%0Aresource.labels.service_name%3D%22company-lookup-api%22"
             exit 1
           fi
           
