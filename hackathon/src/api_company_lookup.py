@@ -10,20 +10,11 @@ from typing import List, Optional, Dict, Any
 import os
 import logging
 
-try:
-    from lookup_company import (
-        get_apify_client,
-        lookup_company,
-        get_summary_stats
-    )
-except ImportError:
-    logging.warning("lookup_company module not found. Creating stub functions.")
-    def get_apify_client():
-        raise NotImplementedError("lookup_company module not available")
-    def lookup_company(*args, **kwargs):
-        raise NotImplementedError("lookup_company module not available")
-    def get_summary_stats(*args, **kwargs):
-        raise NotImplementedError("lookup_company module not available")
+from modules.lookup_company import (
+    get_apify_client,
+    lookup_company,
+    get_summary_stats
+)
 
 # Configure logging
 logging.basicConfig(
