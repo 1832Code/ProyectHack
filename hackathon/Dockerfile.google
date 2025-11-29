@@ -14,6 +14,6 @@ ENV API_MODULE=api_google_search
 # Expose port (Cloud Run will set PORT env var)
 EXPOSE 8080
 
-# Run the API server
-CMD ["uvicorn", "src.api_google_search:app", "--host", "0.0.0.0", "--port", "8080"]
+# Run the API server (PORT env var is set by Cloud Run)
+CMD sh -c "uvicorn src.api_google_search:app --host 0.0.0.0 --port ${PORT:-8080}"
 

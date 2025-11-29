@@ -122,7 +122,7 @@ jobs:
           fi
           
           echo "Building and deploying to Cloud Run..."
-          gcloud run deploy company-lookup-api \
+          if ! gcloud run deploy company-lookup-api \
             --source . \
             --region "${{ env.GCP_REGION }}" \
             --platform managed \
@@ -132,7 +132,21 @@ jobs:
             --cpu 2 \
             --timeout 3600 \
             --max-instances 10 \
-            --project "${{ env.GCP_PROJECT_ID }}"
+            --project "${{ env.GCP_PROJECT_ID }}" \
+            --no-traffic; then
+            echo "❌ Deployment failed. Checking logs..."
+            gcloud run services describe company-lookup-api \
+              --region "${{ env.GCP_REGION }}" \
+              --project "${{ env.GCP_PROJECT_ID }}" \
+              --format="yaml" || true
+            echo ""
+            echo "Recent logs:"
+            gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=company-lookup-api" \
+              --limit 50 \
+              --project "${{ env.GCP_PROJECT_ID }}" \
+              --format="table(timestamp,severity,textPayload)" || true
+            exit 1
+          fi
           
           rm -f Dockerfile
           
