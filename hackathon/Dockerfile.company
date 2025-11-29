@@ -8,18 +8,22 @@ ENV BUILD_DATE=${BUILD_DATE}
 ENV BUILD_VERSION=${BUILD_VERSION}
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN echo "=== Installing dependencies ===" && \
+    pip install --no-cache-dir -r requirements.txt && \
+    echo "=== Verifying LangChain installation ===" && \
+    python -c "import langchain; print(f'✅ langchain version: {langchain.__version__}')" && \
+    python -c "from langchain_deepseek import ChatDeepSeek; print('✅ langchain-deepseek imported successfully')" || (echo "❌ langchain-deepseek installation failed" && echo "=== Installed langchain packages ===" && pip list | grep -i langchain && echo "=== Trying to import ===" && python -c "from langchain_deepseek import ChatDeepSeek" 2>&1 || true)
 
 COPY src/ ./src/
 
 RUN echo "=== Verifying source structure ===" && \
     ls -la /app/src/ && \
     echo "=== Verifying api_company_lookup.py exists ===" && \
-    test -f /app/src/api_company_lookup.py && echo "✅ api_company_lookup.py found" || echo "❌ api_company_lookup.py NOT FOUND" && \
-    echo "=== Checking get_apify_client function ===" && \
-    grep -n "def get_apify_client" /app/src/api_company_lookup.py && \
+    test -f /app/src/api_company_lookup.py && echo "✅ api_company_lookup.py found" || (echo "❌ api_company_lookup.py NOT FOUND" && exit 1) && \
+    echo "=== Checking get_client function ===" && \
+    (grep -q "def get_client" /app/src/api_company_lookup.py && echo "✅ get_client function found") || (echo "❌ get_client function NOT FOUND" && exit 1) && \
     echo "=== Verifying no NotImplementedError ===" && \
-    (! grep -q "NotImplementedError" /app/src/api_company_lookup.py && echo "✅ No NotImplementedError found") || (echo "❌ NotImplementedError found!" && grep -n "NotImplementedError" /app/src/api_company_lookup.py)
+    (! grep -q "NotImplementedError" /app/src/api_company_lookup.py && echo "✅ No NotImplementedError found") || (echo "❌ NotImplementedError found!" && grep -n "NotImplementedError" /app/src/api_company_lookup.py && exit 1)
 
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
