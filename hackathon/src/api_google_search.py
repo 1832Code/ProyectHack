@@ -9,11 +9,21 @@ from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 import os
 import logging
-from google_search import (
-    get_apify_client,
-    search_google,
-    search_google_multiple_queries
-)
+
+try:
+    from google_search import (
+        get_apify_client,
+        search_google,
+        search_google_multiple_queries
+    )
+except ImportError:
+    logging.warning("google_search module not found. Creating stub functions.")
+    def get_apify_client():
+        raise NotImplementedError("google_search module not available")
+    def search_google(*args, **kwargs):
+        raise NotImplementedError("google_search module not available")
+    def search_google_multiple_queries(*args, **kwargs):
+        raise NotImplementedError("google_search module not available")
 
 # Configure logging
 logging.basicConfig(

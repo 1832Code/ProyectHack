@@ -9,12 +9,24 @@ from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 import os
 import logging
-from instagram_search import (
-    get_apify_client,
-    search_instagram_term,
-    search_instagram_hashtag,
-    search_instagram_profile
-)
+
+try:
+    from instagram_search import (
+        get_apify_client,
+        search_instagram_term,
+        search_instagram_hashtag,
+        search_instagram_profile
+    )
+except ImportError:
+    logging.warning("instagram_search module not found. Creating stub functions.")
+    def get_apify_client():
+        raise NotImplementedError("instagram_search module not available")
+    def search_instagram_term(*args, **kwargs):
+        raise NotImplementedError("instagram_search module not available")
+    def search_instagram_hashtag(*args, **kwargs):
+        raise NotImplementedError("instagram_search module not available")
+    def search_instagram_profile(*args, **kwargs):
+        raise NotImplementedError("instagram_search module not available")
 
 # Configure logging
 logging.basicConfig(
