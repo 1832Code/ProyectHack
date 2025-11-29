@@ -12,7 +12,7 @@ on:
 env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   GCP_REGION: ${{ secrets.GCP_REGION || 'us-central1' }}
-  DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+  DEEPSEEK_API: ${{ secrets.DEEPSEEK_API }}
   DEBUG: ${{ secrets.DEBUG || '' }}
 
 jobs:
