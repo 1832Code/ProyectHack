@@ -1,0 +1,108 @@
+name: Deploy Hackathon to Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'hackathon/**'
+  pull_request:
+    branches:
+      - main
+      - master
+    paths:
+      - 'hackathon/**'
+  workflow_dispatch:
+
+env:
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GCP_REGION: ${{ secrets.GCP_REGION || 'us-central1' }}
+  CLOUD_RUN_JOB_NAME: ${{ secrets.CLOUD_RUN_JOB_NAME || 'instagram-search' }}
+  APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
+
+jobs:
+  deploy:
+    name: Deploy to Cloud Run Jobs
+    runs-on: ubuntu-latest
+    
+    # Solo desplegar en push a main/master, no en PRs
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+
+      - name: Enable required APIs
+        run: |
+          gcloud services enable run.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
+          gcloud services enable cloudbuild.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
+          gcloud services enable artifactregistry.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
+
+      - name: Deploy to Cloud Run Jobs
+        working-directory: ./hackathon
+        run: |
+          echo "Deploying Cloud Run Job: ${{ env.CLOUD_RUN_JOB_NAME }}"
+          gcloud run jobs deploy "${{ env.CLOUD_RUN_JOB_NAME }}" \
+            --source . \
+            --region "${{ env.GCP_REGION }}" \
+            --set-env-vars "APIFY_API_TOKEN=${{ env.APIFY_API_TOKEN }}" \
+            --max-retries 1 \
+            --task-timeout 3600 \
+            --cpu 2 \
+            --memory 4Gi \
+            --project "${{ env.GCP_PROJECT_ID }}"
+
+      - name: Deployment summary
+        run: |
+          echo "✅ Deployment successful!"
+          echo "Job name: ${{ env.CLOUD_RUN_JOB_NAME }}"
+          echo "Region: ${{ env.GCP_REGION }}"
+          echo "Project: ${{ env.GCP_PROJECT_ID }}"
+
+  validate:
+    name: Validate deployment configuration
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate Dockerfile
+        working-directory: ./hackathon
+        run: |
+          if [ ! -f Dockerfile ]; then
+            echo "❌ Dockerfile not found"
+            exit 1
+          fi
+          echo "✅ Dockerfile found"
+
+      - name: Validate requirements.txt
+        working-directory: ./hackathon
+        run: |
+          if [ ! -f requirements.txt ]; then
+            echo "❌ requirements.txt not found"
+            exit 1
+          fi
+          echo "✅ requirements.txt found"
+
+      - name: Validate source code
+        working-directory: ./hackathon
+        run: |
+          if [ ! -d src ]; then
+            echo "❌ src directory not found"
+            exit 1
+          fi
+          if [ ! -f src/main.py ]; then
+            echo "❌ src/main.py not found"
+            exit 1
+          fi
+          echo "✅ Source code structure valid"
+

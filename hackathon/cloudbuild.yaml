@@ -1,0 +1,26 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/instagram-search:$SHORT_SHA', '.']
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/instagram-search:$SHORT_SHA']
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'instagram-search'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/instagram-search:$SHORT_SHA'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--set-env-vars'
+      - 'APIFY_API_TOKEN=${_APIFY_API_TOKEN}'
+
+substitutions:
+  _APIFY_API_TOKEN: ''
+
+options:
+  machineType: 'E2_HIGHCPU_8'
+
