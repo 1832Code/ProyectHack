@@ -1,57 +1,81 @@
-"use client"
+"use client";
 
-import type React from "react"
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import { cn } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { searchCompany } from "@/lib/api";
+import { SearchCommand } from "./search-command";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+} from "@/components/ui/form";
 
 const countries = [
-  { id: "peru", label: "Peru" },
-  { id: "chile", label: "Chile" },
-]
+  { id: "peru", label: "Peru", flag: "🇵🇪" },
+  { id: "chile", label: "Chile", flag: "🇨🇱" },
+];
+
+const searchFormSchema = z.object({
+  companyName: z
+    .string()
+    .min(2, "Name must have at least 2 characters")
+    .max(100, "Name cannot exceed 100 characters"),
+  country: z.string().min(1, "Select a country"),
+  sector: z.string().min(2, "Sector is required"),
+  keywords: z.string().optional(),
+});
+
+type SearchFormValues = z.infer<typeof searchFormSchema>;
 
 export function SearchScreen() {
-  const router = useRouter()
+  const router = useRouter();
 
-  const [companyName, setCompanyName] = useState("")
-  const [country, setCountry] = useState("")
-  const [keywords, setKeywords] = useState("")
-  const [errors, setErrors] = useState<{ companyName?: string; country?: string }>({})
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const form = useForm<SearchFormValues>({
+    resolver: zodResolver(searchFormSchema),
+    defaultValues: {
+      companyName: "",
+      country: "",
+      sector: "",
+      keywords: "",
+    },
+    mode: "onChange",
+  });
 
-  const validate = () => {
-    const newErrors: { companyName?: string; country?: string } = {}
+  const {
+    formState: { isSubmitting },
+    setValue,
+    watch,
+  } = form;
 
-    if (!companyName || companyName.length < 2) {
-      newErrors.companyName = "Name must have at least 2 characters"
-    } else if (companyName.length > 100) {
-      newErrors.companyName = "Name cannot exceed 100 characters"
-    }
+  const companyName = watch("companyName");
+  const country = watch("country");
+  const sector = watch("sector");
 
-    if (!country) {
-      newErrors.country = "Select a country"
-    }
+  // Button is enabled when a company is selected (which auto-fills sector) and country is chosen
+  const isFormReady =
+    companyName.length >= 2 && country.length > 0 && sector.length >= 2;
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+  const onSubmit = (data: SearchFormValues) => {
+    const queryParams = new URLSearchParams();
+    queryParams.set("companyName", data.companyName);
+    queryParams.set("country", data.country);
 
-  const isValid = companyName.length >= 2 && country !== ""
+    router.push(`/claim?${queryParams.toString()}`);
+  };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!validate()) return
-
-    router.push("/dashboard")
-  }
+  const handleCompanySelect = (company: { name: string; sector: string }) => {
+    setValue("companyName", company.name, { shouldValidate: true });
+    setValue("sector", company.sector, { shouldValidate: true });
+  };
 
   return (
     <div className="min-h-screen bg-background px-5 py-6 flex flex-col">
@@ -81,92 +105,92 @@ export function SearchScreen() {
             Back
           </Link>
         </Button>
-        <h1 className="text-[36px] font-bold text-foreground tracking-tight font-serif italic leading-tight">
-          New
-          <br />
-          <span className="text-primary">Search</span>
+        <h1 className="text-[36px] font-bold text-foreground tracking-tight font-serif leading-tight text-center">
+          New <span className="text-primary">Search</span>
         </h1>
       </header>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-8 flex-1">
-        {/* Company Name Field */}
-        <div className="flex flex-col gap-2">
-          <Label className="text-base text-muted-foreground italic font-normal">company name</Label>
-          <Input
-            value={companyName}
-            onChange={(e) => setCompanyName(e.target.value)}
-            placeholder=""
-            className="h-14 px-4 bg-card border-0 rounded-2xl text-base text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-2 focus-visible:ring-primary/30 transition-all"
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="flex flex-col gap-8 flex-1"
+        >
+          {/* Company Name Field */}
+          <FormField
+            control={form.control}
+            name="companyName"
+            render={({ field }) => (
+              <FormItem className="flex justify-center w-full items-center">
+                <FormControl>
+                  <SearchCommand
+                    value={field.value}
+                    onChange={field.onChange}
+                    onCompanySelect={handleCompanySelect}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-          {errors.companyName && <p className="text-xs text-destructive">{errors.companyName}</p>}
-        </div>
 
-        {/* Country Field */}
-        <div className="flex flex-col gap-3">
-          <Label className="text-base text-muted-foreground italic font-normal">country</Label>
-          <div className="flex items-center gap-2">
-            <ToggleGroup
-              type="single"
-              value={country}
-              onValueChange={(value) => value && setCountry(value)}
-              className="flex gap-2"
-            >
-              {countries.map((c) => (
-                <ToggleGroupItem
-                  key={c.id}
-                  value={c.id}
-                  className={cn(
-                    "px-5 h-11 rounded-full text-base font-normal transition-all",
-                    "border border-border",
-                    "data-[state=off]:bg-background data-[state=off]:text-foreground",
-                    "data-[state=off]:hover:bg-secondary",
-                    "data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:border-primary",
-                  )}
-                >
-                  {c.label}
-                </ToggleGroupItem>
-              ))}
-            </ToggleGroup>
+          {/* Country Field */}
+          <FormField
+            control={form.control}
+            name="country"
+            render={({ field }) => (
+              <FormItem className="flex flex-col gap-3">
+                <div className="flex items-center gap-3">
+                  {countries.map((c) => (
+                    <Badge
+                      key={c.id}
+                      variant={field.value === c.id ? "default" : "outline"}
+                      onClick={() => field.onChange(c.id)}
+                      className="cursor-pointer"
+                    >
+                      <span className="text-base">{c.flag}</span>
+                      {c.label}
+                    </Badge>
+                  ))}
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Hidden Sector Field - auto-filled from company selection */}
+          <FormField
+            control={form.control}
+            name="sector"
+            render={() => <input type="hidden" />}
+          />
+
+          {/* Spacer to push button to bottom */}
+          <div className="flex-1" />
+
+          {/* Submit Button */}
+          <div className="flex flex-col gap-2">
+            {form.formState.errors.root && (
+              <p className="text-sm text-destructive text-center">
+                {form.formState.errors.root.message}
+              </p>
+            )}
             <Button
-              type="button"
-              variant="secondary"
-              className="px-6 h-11 rounded-full text-base font-normal bg-secondary text-foreground hover:bg-secondary/80"
+              type="submit"
+              disabled={!isFormReady || isSubmitting}
+              size="lg"
+              className={cn(
+                "w-full h-14 rounded-2xl text-base font-medium transition-all",
+                isFormReady
+                  ? "bg-primary hover:bg-primary/90 text-primary-foreground"
+                  : "bg-secondary text-muted-foreground",
+                "disabled:opacity-40 disabled:cursor-not-allowed"
+              )}
             >
-              Search
+              {isSubmitting ? "Searching..." : "continue"}
             </Button>
           </div>
-          {errors.country && <p className="text-xs text-destructive">{errors.country}</p>}
-        </div>
-
-        {/* Keywords Field */}
-        <div className="flex flex-col gap-2">
-          <Label className="text-base text-muted-foreground italic font-normal">keywords</Label>
-          <Textarea
-            value={keywords}
-            onChange={(e) => setKeywords(e.target.value)}
-            placeholder=""
-            rows={3}
-            className="px-4 py-3 bg-card border-0 rounded-2xl text-base text-foreground placeholder:text-muted-foreground/60 resize-none focus-visible:ring-2 focus-visible:ring-primary/30 transition-all"
-          />
-        </div>
-
-        {/* Spacer to push button to bottom */}
-        <div className="flex-1" />
-
-        {/* Submit Button */}
-        <Button
-          type="submit"
-          disabled={!isValid}
-          size="lg"
-          className={cn(
-            "w-full h-14 rounded-2xl text-base font-medium transition-all",
-            isValid ? "bg-primary hover:bg-primary/90 text-primary-foreground" : "bg-secondary text-muted-foreground",
-            "disabled:opacity-40 disabled:cursor-not-allowed",
-          )}
-        >
-          continue
-        </Button>
-      </form>
+        </form>
+      </Form>
     </div>
-  )
+  );
 }

@@ -536,7 +536,7 @@ export function DashboardScreen() {
                 </div>
               </div>
               <div className={cn("transition-all duration-300", isSticky ? "hidden" : "block")}>
-                <h1 className="text-xl font-bold text-foreground font-serif italic">Rappi</h1>
+                <h1 className="text-xl font-bold text-foreground font-serif">Rappi</h1>
                 <p className="text-sm text-muted-foreground">Peru · Sep 20th</p>
               </div>
             </div>
@@ -548,7 +548,7 @@ export function DashboardScreen() {
         <div className="grid grid-cols-2 gap-3 mb-8">
           <Card className="border-0 bg-card rounded-2xl">
             <CardContent className="p-4">
-              <p className="text-sm text-muted-foreground mb-1 italic">mentions</p>
+              <p className="text-sm text-muted-foreground mb-1">mentions</p>
               <div className="flex items-baseline gap-2">
                 <span className="text-3xl font-bold text-foreground font-serif">32k</span>
                 <span className="text-sm text-primary font-medium">↑2%</span>
@@ -557,7 +557,7 @@ export function DashboardScreen() {
           </Card>
           <Card className="border-0 bg-card rounded-2xl">
             <CardContent className="p-4">
-              <p className="text-sm text-muted-foreground mb-1 italic">approval</p>
+              <p className="text-sm text-muted-foreground mb-1">approval</p>
               <div className="flex items-baseline gap-2">
                 <span className="text-3xl font-bold text-foreground font-serif">89%</span>
                 <span className="text-sm text-primary font-medium">↑12%</span>
@@ -567,7 +567,7 @@ export function DashboardScreen() {
         </div>
 
         <div className="mb-8">
-          <p className="text-sm text-muted-foreground mb-3 italic">sentiment</p>
+          <p className="text-sm text-muted-foreground mb-3">sentiment</p>
           <Card className="border-0 bg-card rounded-2xl">
             <CardContent className="p-4">
               <svg viewBox="0 0 300 48" className="w-full h-12">
@@ -598,7 +598,7 @@ export function DashboardScreen() {
         </div>
 
         <div className="mb-8">
-          <p className="text-base text-foreground mb-4 italic font-serif">talking now</p>
+          <p className="text-base text-foreground mb-4 font-serif">talking now</p>
           <div className="flex flex-col gap-2">
             <Card className="border-0 bg-card rounded-xl">
               <CardContent className="p-3 flex items-center justify-between">
@@ -626,7 +626,7 @@ export function DashboardScreen() {
 
         <section className="pb-8">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base text-foreground font-serif italic">Social mentions</h2>
+            <h2 className="text-base text-foreground font-serif">Social mentions</h2>
             <span className="text-sm text-muted-foreground">{allMentions.length} total</span>
           </div>
 

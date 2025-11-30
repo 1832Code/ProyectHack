@@ -32,7 +32,7 @@ export function SplashScreen() {
       </header>
 
       <main className="flex-1 flex flex-col justify-center gap-6">
-        <h1 className="text-[38px] font-bold text-foreground leading-[1.1] tracking-tight font-serif italic">
+        <h1 className="text-[38px] font-bold text-foreground leading-[1.1] tracking-tight font-serif">
           Detect what
           <br />
           <span className="text-primary">matters</span> before
