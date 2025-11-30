@@ -39,19 +39,12 @@ def _get_deepseek_llm():
     global _deepseek_llm
     if _deepseek_llm is None:
         if not LANGCHAIN_AVAILABLE:
-            logger.warning("⚠️  LangChain not available")
+            logger.warning("LangChain not available. Install langchain and langchain-deepseek packages.")
             return None
         
-        try:
-            from dotenv import load_dotenv
-            load_dotenv()
-        except ImportError:
-            pass
-        
-        api_key = os.getenv("DEEPSEEK_API") or os.getenv("DEEPSEEK_API_KEY")
+        api_key = os.getenv("DEEPSEEK_API")
         if not api_key:
-            logger.warning("⚠️  DEEPSEEK_API or DEEPSEEK_API_KEY not set")
-            logger.debug(f"Available env vars with 'DEEPSEEK': {[k for k in os.environ.keys() if 'DEEPSEEK' in k.upper()]}")
+            logger.warning("DEEPSEEK_API not set. Agent functionality disabled.")
             return None
         
         os.environ["DEEPSEEK_API_KEY"] = api_key
@@ -64,9 +57,9 @@ def _get_deepseek_llm():
                 timeout=None,
                 max_retries=2
             )
-            logger.info("✅ DeepSeek LLM initialized")
+            logger.info("DeepSeek LLM initialized successfully")
         except Exception as e:
-            logger.error(f"❌ Failed to initialize DeepSeek LLM: {e}")
+            logger.error(f"Error initializing DeepSeek LLM: {e}", exc_info=True)
             return None
     
     return _deepseek_llm
