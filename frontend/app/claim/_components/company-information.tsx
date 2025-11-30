@@ -10,7 +10,10 @@ interface CompanyConfirmationProps {
   country: string;
 }
 
-export async function CompanyConfirmation({ companyName, country }: CompanyConfirmationProps) {
+export async function CompanyConfirmation({
+  companyName,
+  country,
+}: CompanyConfirmationProps) {
   let _company: CompanyLookupResponse | null = null;
   try {
     _company = await lookupCompany({
