@@ -4,6 +4,7 @@ Author: Mauricio J. @synaw_w
 """
 
 import logging
+import re
 from typing import List, Optional, Dict, Any
 
 from src.modules.capture import get_meta
@@ -70,6 +71,7 @@ def process_meta_data(meta: Dict[str, Any]) -> List[Dict[str, Any]]:
             processed = {
                 "id_company": id_company,
                 "query": query,
+                "source": label,
                 "title": None,
                 "description": None,
                 "insight1": None,
@@ -86,6 +88,8 @@ def process_meta_data(meta: Dict[str, Any]) -> List[Dict[str, Any]]:
                 processed = _process_instagram_data(item, processed)
             elif label == "google":
                 processed = _process_google_data(item, processed)
+            elif label == "x":
+                processed = _process_x_data(item, processed)
             else:
                 logger.warning(f"Unknown label: {label}")
                 skipped_items += 1
@@ -110,7 +114,8 @@ def _process_tiktok_data(item: Dict[str, Any], processed: Dict[str, Any]) -> Dic
     if isinstance(item, dict):
         text = item.get("text", "")
         if text:
-            processed["title"] = text[:500] if len(text) > 500 else text
+            author_name = item.get("authorMeta.name", "")
+            processed["title"] = author_name
             processed["description"] = text[:2000] if len(text) > 2000 else text
         
         processed["video"] = _clean_url(item.get("webVideoUrl"))
@@ -164,12 +169,65 @@ def _process_instagram_data(item: Dict[str, Any], processed: Dict[str, Any]) -> 
 
 
 def _process_google_data(item: Dict[str, Any], processed: Dict[str, Any]) -> Dict[str, Any]:
-    """Process Google data item (single search result)."""
+    """Process Google data item (single search result from organicResults)."""
     if isinstance(item, dict):
         processed["title"] = item.get("title", "")[:500] if item.get("title") else None
         processed["description"] = item.get("description", "")[:2000] if item.get("description") else None
+        
+        url = item.get("url") or item.get("displayedUrl", "")
+        processed["video"] = _clean_url(url)
         processed["image"] = None
-        processed["video"] = None
+        
+        site_links = item.get("siteLinks", [])
+        site_links_count = len(site_links) if isinstance(site_links, list) else 0
+        processed["insight1"] = float(site_links_count) if site_links_count > 0 else 0
+        
+        processed["insight2"] = None
+        processed["insight3"] = None
+        processed["sentiment"] = None
+    
+    return processed
+
+
+def _process_x_data(item: Dict[str, Any], processed: Dict[str, Any]) -> Dict[str, Any]:
+    """Process X (Twitter) data item (single tweet)."""
+    if isinstance(item, dict):
+        twitter_url = item.get("twitterUrl") or item.get("url", "")
+        
+        username = None
+        if twitter_url:
+            match = re.search(r'(?:twitter\.com|x\.com)/([^/]+)', twitter_url)
+            if match:
+                username = match.group(1)
+        
+        processed["title"] = username or "Unknown"
+        
+        text = item.get("text", "") or item.get("fullText", "") or item.get("tweetText", "")
+        processed["description"] = text[:2000] if text and len(text) > 2000 else text
+        
+        tweet_url = item.get("url") or item.get("twitterUrl") or item.get("tweetUrl") or item.get("permalink")
+        processed["video"] = _clean_url(tweet_url)
+        
+        user = item.get("user", {})
+        if isinstance(user, dict):
+            profile_image = user.get("profileImageUrl") or user.get("profileImage")
+            processed["image"] = _clean_url(profile_image)
+        else:
+            processed["image"] = _clean_url(item.get("profileImageUrl") or item.get("profileImage"))
+        
+        processed["insight1"] = float(item.get("retweetCount", 0)) if item.get("retweetCount") is not None else None
+        processed["insight2"] = float(item.get("replyCount", 0)) if item.get("replyCount") is not None else None
+        processed["insight3"] = float(item.get("likeCount", 0)) if item.get("likeCount") is not None else None
+        
+        total_engagement = (
+            (processed["insight1"] or 0) +
+            (processed["insight2"] or 0) +
+            (processed["insight3"] or 0) +
+            (float(item.get("quoteCount", 0)) if item.get("quoteCount") is not None else 0)
+        )
+        
+        if total_engagement > 0:
+            processed["sentiment"] = min(100.0, (total_engagement / 100000.0) * 100.0)
     
     return processed
 
@@ -212,7 +270,7 @@ def post_exists(title: str, video: Optional[str] = None, id_company: int = 1) ->
         return False
 
 
-def get_posts(id_company: int = 1, limit: int = 100, order_by: str = "created_at") -> List[Dict[str, Any]]:
+def get_posts(id_company: int = 1, limit: int = 100, order_by: str = "created_at", source: Optional[str] = None, query: Optional[str] = None) -> List[Dict[str, Any]]:
     """
     Get posts from the database.
     
@@ -220,30 +278,40 @@ def get_posts(id_company: int = 1, limit: int = 100, order_by: str = "created_at
         id_company: Company ID (default: 1)
         limit: Maximum number of posts to return
         order_by: Field to order by (default: "created_at")
+        source: Optional source filter (e.g., "tiktok", "instagram", "google", "x")
+        query: Optional query filter (search query used)
         
     Returns:
         List of post records as dictionaries
     """
     try:
-        logger.info(f"🔍 get_posts called: id_company={id_company}, limit={limit}, order_by={order_by}")
+        logger.info(f"🔍 get_posts called: id_company={id_company}, limit={limit}, order_by={order_by}, source={source}, query={query}")
         
         supabase = get_supabase_client()
         logger.info("✅ Supabase client obtained")
         
-        query = supabase.table("posts").select("*").eq("id_company", id_company)
+        db_query = supabase.table("posts").select("*").eq("id_company", id_company)
         logger.info(f"✅ Query built for id_company={id_company}")
         
-        query = query.order(order_by, desc=True).limit(limit)
+        if source:
+            db_query = db_query.eq("source", source)
+            logger.info(f"✅ Filtered by source: {source}")
+        
+        if query:
+            db_query = db_query.eq("query", query)
+            logger.info(f"✅ Filtered by query: {query}")
+        
+        db_query = db_query.order(order_by, desc=True).limit(limit)
         logger.info(f"✅ Query ordered by {order_by} desc, limit={limit}")
         
-        response = query.execute()
+        response = db_query.execute()
         logger.info(f"✅ Query executed, response received")
         
         results = response.data if response.data else []
         logger.info(f"✅ Retrieved {len(results)} posts from database")
         
         if len(results) == 0:
-            logger.warning(f"⚠️  No posts found for id_company={id_company}")
+            logger.warning(f"⚠️  No posts found for id_company={id_company}, source={source}, query={query}")
         else:
             logger.info(f"📊 First post ID: {results[0].get('id') if results else 'N/A'}")
         
@@ -309,7 +377,7 @@ def process_latest_metas(id_company: int = 1, label: Optional[str] = None, limit
     
     Args:
         id_company: Company ID (default: 1)
-        label: Optional label filter (e.g., "tiktok", "instagram", "google")
+        label: Optional label filter (e.g., "tiktok", "instagram", "google", "x")
         limit: Maximum number of metas to process
         
     Returns:

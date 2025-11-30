@@ -129,7 +129,7 @@ def search_google(
     max_items: int = 50,
     country_code: Optional[str] = None,
     language_code: Optional[str] = None,
-    results_per_page: int = 10,
+    results_per_page: int = 100,
     use_cache: bool = True,
     force_refresh: bool = False
 ) -> List[Dict[str, Any]]:
@@ -165,7 +165,11 @@ def search_google(
     try:
         logger.info(f"Starting Google search for: {query}")
         
+        country_code_lower = country_code.lower() if country_code else ""
+        search_lang = language_code or "es"
+        
         run_input = {
+            "countryCode": country_code_lower,
             "focusOnPaidAds": False,
             "forceExactMatch": False,
             "includeIcons": False,
@@ -177,9 +181,9 @@ def search_google(
             "resultsPerPage": min(results_per_page, 100),
             "saveHtml": False,
             "saveHtmlToKeyValueStore": True,
+            "searchLanguage": search_lang,
             "aiMode": "aiModeOff",
-            "searchLanguage": language_code or "",
-            "languageCode": language_code or "",
+            "languageCode": "",
             "wordsInTitle": [],
             "wordsInText": [],
             "wordsInUrl": []
@@ -188,9 +192,17 @@ def search_google(
         run = client.actor("apify/google-search-scraper").call(run_input=run_input)
         
         dataset = client.dataset(run["defaultDatasetId"]).list_items()
-        results = list(dataset.items)
+        all_items = list(dataset.items)
         
-        logger.info(f"Found {len(results)} results for query: {query}")
+        results = []
+        for item in all_items:
+            if isinstance(item, dict) and "organicResults" in item:
+                organic_results = item.get("organicResults", [])
+                results.extend(organic_results)
+            elif isinstance(item, dict):
+                results.append(item)
+        
+        logger.info(f"Found {len(results)} organic results for query: {query}")
         
         results = results[:max_items]
         

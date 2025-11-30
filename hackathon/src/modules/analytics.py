@@ -5,8 +5,28 @@ Author: Mauricio J. @synaw_w
 
 import logging
 import re
+import os
+import json
+import hashlib
 from typing import Optional, Dict, Any, List
+from collections import Counter
+from pathlib import Path
+from datetime import datetime, timedelta
 from src.modules.supabase_connection import get_supabase_client
+from src.modules.word_lists import POSITIVE_WORDS, NEGATIVE_WORDS, SPANISH_STOPWORDS
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
+try:
+    from langchain_deepseek import ChatDeepSeek
+    LANGCHAIN_AVAILABLE = True
+except ImportError:
+    LANGCHAIN_AVAILABLE = False
+    logger.warning("langchain-deepseek not available")
 
 logging.basicConfig(
     level=logging.INFO,
@@ -16,6 +36,20 @@ logger = logging.getLogger(__name__)
 
 _sentiment_analyzer = None
 _nlp = None
+_deepseek_llm = None
+
+_keywords_cache_dir = Path("/tmp/keywords_cache")
+_keywords_cache_ttl_minutes = 10
+
+try:
+    _keywords_cache_dir.mkdir(parents=True, exist_ok=True)
+    logger.info(f"✅ Keywords cache directory initialized: {_keywords_cache_dir}")
+except Exception as e:
+    logger.error(f"❌ Failed to create keywords cache directory: {e}", exc_info=True)
+_deepseek_llm = None
+
+_keywords_cache_dir = Path("/tmp/keywords_cache")
+_keywords_cache_ttl_minutes = 10
 
 
 def _get_nlp():
@@ -44,66 +78,6 @@ def _get_nlp():
             logger.warning("⚠️  spacy not installed. Using basic tokenization without lemmatization")
             _nlp = None
     return _nlp
-
-POSITIVE_WORDS = {
-    "bueno", "excelente", "genial", "fantástico", "maravilloso", "perfecto", "increíble",
-    "amor", "adorar", "encantar", "feliz", "alegre", "satisfecho", "contento",
-    "satisfacción", "recomendar", "recomendado", "recomendable", "mejor", "superior",
-    "delicioso", "rico", "sabroso", "exquisito", "divino", "espectacular", "magnífico",
-    "estupendo", "fabuloso", "sorprendente", "extraordinario", "brillante", "ideal",
-    "óptimo", "satisfactorio", "agradable", "placentero", "disfrutar", "volver",
-    "gustar", "favorito", "preferido", "destacado", "notable", "sobresaliente",
-    "excepcional", "único", "especial", "impresionante", "asombroso", "radiante",
-    "espléndido", "luminoso"
-}
-
-NEGATIVE_WORDS = {
-    "malo", "mala", "malos", "malas", "terrible", "horrible", "pésimo", "pésima",
-    "pésimos", "pésimas", "decepcionante", "decepcionantes", "mal", "malísimo",
-    "malísima", "malísimos", "malísimas", "asqueroso", "asquerosa", "asquerosos",
-    "asquerosas", "repugnante", "repugnantes", "desagradable", "desagradables",
-    "odio", "odiar", "odio", "odiamos", "odiarás", "triste", "tristes", "tristeza",
-    "deprimido", "deprimida", "deprimidos", "deprimidas", "frustrado", "frustrada",
-    "frustrados", "frustradas", "enojado", "enojada", "enojados", "enojadas",
-    "molesto", "molesta", "molestos", "molestas", "irritado", "irritada",
-    "irritados", "irritadas", "furioso", "furiosa", "furiosos", "furiosas",
-    "disgustado", "disgustada", "disgustados", "disgustadas", "descontento",
-    "descontenta", "descontentos", "descontentas", "insatisfecho", "insatisfecha",
-    "insatisfechos", "insatisfechas", "decepcionado", "decepcionada", "decepcionados",
-    "decepcionadas", "desilusionado", "desilusionada", "desilusionados",
-    "desilusionadas", "desesperado", "desesperada", "desesperados", "desesperadas",
-    "desesperanzado", "desesperanzada", "desesperanzados", "desesperanzadas",
-    "desalentado", "desalentada", "desalentados", "desalentadas", "desanimado",
-    "desanimada", "desanimados", "desanimadas", "desmotivado", "desmotivada",
-    "desmotivados", "desmotivadas", "desalentado", "desalentada", "desalentados",
-    "desalentadas", "desilusionado", "desilusionada", "desilusionados",
-    "desilusionadas", "decepcionado", "decepcionada", "decepcionados",
-    "decepcionadas", "insatisfecho", "insatisfecha", "insatisfechos",
-    "insatisfechas", "descontento", "descontenta", "descontentos", "descontentas",
-    "molesto", "molesta", "molestos", "molestas", "irritado", "irritada",
-    "irritados", "irritadas", "furioso", "furiosa", "furiosos", "furiosas",
-    "enojado", "enojada", "enojados", "enojadas", "disgustado", "disgustada",
-    "disgustados", "disgustadas", "repugnante", "repugnantes", "asqueroso",
-    "asquerosa", "asquerosos", "asquerosas", "desagradable", "desagradables",
-    "horrible", "horribles", "terrible", "terribles", "pésimo", "pésima",
-    "pésimos", "pésimas", "malo", "mala", "malos", "malas", "mal", "malísimo",
-    "malísima", "malísimos", "malísimas", "decepcionante", "decepcionantes",
-    "desastroso", "desastrosa", "desastrosos", "desastrosas", "catastrófico",
-    "catastrófica", "catastróficos", "catastróficas", "devastador", "devastadora",
-    "devastadores", "devastadoras", "destructivo", "destructiva", "destructivos",
-    "destructivas", "perjudicial", "perjudiciales", "dañino", "dañina", "dañinos",
-    "dañinas", "nocivo", "nociva", "nocivos", "nocivas", "tóxico", "tóxica",
-    "tóxicos", "tóxicas", "venenoso", "venenosa", "venenosos", "venenosas",
-    "peligroso", "peligrosa", "peligrosos", "peligrosas", "riesgoso", "riesgosa",
-    "riesgosos", "riesgosas", "arriesgado", "arriesgada", "arriesgados",
-    "arriesgadas", "inseguro", "insegura", "inseguros", "inseguras", "inestable",
-    "inestables", "inconstante", "inconstantes", "variable", "variables",
-    "impredecible", "impredecibles", "imprevisible", "imprevisibles",
-    "inesperado", "inesperada", "inesperados", "inesperadas", "sorpresivo",
-    "sorpresiva", "sorpresivos", "sorpresivas", "inesperado", "inesperada",
-    "inesperados", "inesperadas", "sorpresivo", "sorpresiva", "sorpresivos",
-    "sorpresivas", "inesperado", "inesperada", "inesperados", "inesperadas"
-}
 
 
 def _simple_stem_spanish(word: str) -> str:
@@ -261,7 +235,7 @@ def count_keyword_mentions(keyword: str, id_company: int = 1) -> Dict[str, Any]:
                 "count_mentions": 0
             }
         
-        keyword_clean = keyword.strip()
+        keyword_clean = keyword.strip().lower()
         supabase = get_supabase_client()
         
         keyword_pattern = f"%{keyword_clean}%"
@@ -327,7 +301,8 @@ def calculate_sentiment_approval(keyword: Optional[str] = None, id_company: int 
         query = supabase.table("posts").select("id,title,description").eq("id_company", id_company)
         
         if keyword:
-            keyword_pattern = f"%{keyword.strip()}%"
+            keyword_clean = keyword.strip().lower()
+            keyword_pattern = f"%{keyword_clean}%"
             query_title = supabase.table("posts").select("id,title,description").eq("id_company", id_company).ilike("title", keyword_pattern)
             query_desc = supabase.table("posts").select("id,title,description").eq("id_company", id_company).ilike("description", keyword_pattern)
             
@@ -440,6 +415,247 @@ def calculate_sentiment_approval(keyword: Optional[str] = None, id_company: int 
             "negative_count": 0,
             "neutral_count": 0,
             "keyword": keyword,
+            "error": str(e)
+        }
+
+
+def _get_deepseek_llm():
+    """Get or create DeepSeek LLM instance (singleton)."""
+    global _deepseek_llm
+    if _deepseek_llm is None:
+        if not LANGCHAIN_AVAILABLE:
+            logger.warning("⚠️  LangChain not available")
+            return None
+        
+        api_key = os.getenv("DEEPSEEK_API")
+        if not api_key:
+            logger.warning("⚠️  DEEPSEEK_API not set")
+            return None
+        
+        try:
+            _deepseek_llm = ChatDeepSeek(
+                model="deepseek-chat",
+                temperature=0.7,
+                max_tokens=None,
+                timeout=None,
+                max_retries=2,
+                api_key=api_key
+            )
+            logger.info("✅ DeepSeek LLM initialized")
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize DeepSeek LLM: {e}")
+            return None
+    
+    return _deepseek_llm
+
+
+def _get_keywords_cache_key(query: str, id_company: int) -> str:
+    """Generate cache key for keywords."""
+    key_string = f"{query.lower().strip()}|{id_company}"
+    return hashlib.md5(key_string.encode()).hexdigest()
+
+
+def _get_keywords_cache_file_path(cache_key: str) -> Path:
+    """Get cache file path for keywords."""
+    try:
+        _keywords_cache_dir.mkdir(parents=True, exist_ok=True)
+    except Exception:
+        pass
+    return _keywords_cache_dir / f"{cache_key}.json"
+
+
+def _load_keywords_cache(cache_key: str) -> Optional[List[str]]:
+    """Load keywords from cache."""
+    cache_file = _get_keywords_cache_file_path(cache_key)
+    
+    if not cache_file.exists():
+        return None
+    
+    try:
+        with open(cache_file, 'r', encoding='utf-8') as f:
+            cache_data = json.load(f)
+        
+        cached_time_str = cache_data.get('timestamp', '')
+        if not cached_time_str:
+            cache_file.unlink()
+            return None
+        
+        cached_time = datetime.fromisoformat(cached_time_str)
+        age = datetime.now() - cached_time
+        
+        if age > timedelta(minutes=_keywords_cache_ttl_minutes):
+            logger.info(f"Keywords cache expired (age: {age.total_seconds()/60:.1f} min)")
+            cache_file.unlink()
+            return None
+        
+        keywords = cache_data.get('keywords', [])
+        logger.info(f"✅✅✅ KEYWORDS CACHE HIT - Using cached topics (NO DEEPSEEK API CALLS)")
+        return keywords
+    except Exception as e:
+        logger.warning(f"Error loading keywords cache: {e}")
+        try:
+            cache_file.unlink()
+        except:
+            pass
+        return None
+
+
+def _save_keywords_cache(cache_key: str, keywords: List[str]) -> None:
+    """Save keywords to cache."""
+    try:
+        cache_file = _get_keywords_cache_file_path(cache_key)
+        
+        cache_data = {
+            'timestamp': datetime.now().isoformat(),
+            'keywords': keywords
+        }
+        
+        temp_file = cache_file.with_suffix('.tmp')
+        with open(temp_file, 'w', encoding='utf-8') as f:
+            json.dump(cache_data, f, ensure_ascii=False, indent=2)
+        
+        temp_file.replace(cache_file)
+        logger.info(f"✅ Saved keywords cache: {cache_key[:16]}...")
+    except Exception as e:
+        logger.error(f"Error saving keywords cache: {e}", exc_info=True)
+
+
+def get_keywords(query: str, id_company: int = 1, limit: int = 100) -> Dict[str, Any]:
+    """
+    Obtener los últimos 50 posts, extraer títulos y usar agente DeepSeek para generar 5 tópicos de marketing.
+    
+    Args:
+        query: Query para filtrar posts
+        id_company: Company ID (default: 1)
+        limit: Número máximo de posts a analizar (default: 50)
+        
+    Returns:
+        Dict with query and keywords (lista de 5 tópicos cortos)
+    """
+    try:
+        logger.info(f"🔍 Generating marketing topics from posts for query: '{query}' (company: {id_company})")
+        
+        if not query or not query.strip():
+            logger.warning("⚠️  Empty query provided")
+            return {
+                "query": query,
+                "keywords": []
+            }
+        
+        query_clean = query.strip()
+        cache_key = _get_keywords_cache_key(query_clean, id_company)
+        
+        cached_keywords = _load_keywords_cache(cache_key)
+        if cached_keywords:
+            return {
+                "query": query_clean,
+                "keywords": cached_keywords
+            }
+        
+        logger.warning(f"❌❌❌ KEYWORDS CACHE MISS - Will make DeepSeek API call")
+        
+        supabase = get_supabase_client()
+        
+        keyword_pattern = f"%{query_clean.lower()}%"
+        
+        query_title = supabase.table("posts").select("id,title").eq("id_company", id_company).ilike("title", keyword_pattern)
+        query_desc = supabase.table("posts").select("id,title").eq("id_company", id_company).ilike("description", keyword_pattern)
+        
+        response_title = query_title.execute()
+        response_desc = query_desc.execute()
+        
+        posts_title = {post["id"]: post for post in (response_title.data or [])}
+        posts_desc = {post["id"]: post for post in (response_desc.data or [])}
+        
+        all_posts_dict = {**posts_title, **posts_desc}
+        posts = list(all_posts_dict.values())[:limit]
+        
+        if len(posts) == 0:
+            logger.warning(f"⚠️  No posts found for query: '{query_clean}'")
+            return {
+                "query": query_clean,
+                "keywords": []
+            }
+        
+        logger.info(f"📊 Analyzing {len(posts)} posts for topic extraction")
+        
+        titles = []
+        for post in posts:
+            title = post.get("title", "")
+            if title and title.strip():
+                titles.append(title.strip())
+        
+        if len(titles) == 0:
+            logger.warning("⚠️  No titles found in posts")
+            return {
+                "query": query_clean,
+                "keywords": []
+            }
+        
+        llm = _get_deepseek_llm()
+        if not llm:
+            logger.error("❌ DeepSeek LLM not available")
+            return {
+                "query": query_clean,
+                "keywords": [],
+                "error": "DeepSeek LLM not available"
+            }
+        
+        titles_text = "\n".join([f"- {title}" for title in titles[:50]])
+        
+        prompt_text = f"""Eres un especialista en marketing digital y análisis de tendencias. Analiza los siguientes títulos de posts relacionados con "{query_clean}" y elabora 10 tópicos cortos (máximo 3-5 palabras cada uno) sobre lo que se está hablando la gente en esta data. Que de valor a la empresa incluye quejas, opiniones, etc.
+
+TÍTULOS DE POSTS:
+{titles_text}
+
+INSTRUCCIONES:
+- Analiza los títulos y identifica los temas principales que se están discutiendo
+- Genera exactamente 10 tópicos cortos y concisos (máximo 3-5 palabras cada uno)
+- Formato: ["tópico 1", "tópico 2", "tópico 3", "tópico 4", "tópico 5"]
+
+Responde SOLO con el JSON array:"""
+        
+        logger.info(f"🤖 Calling DeepSeek agent to generate marketing topics...")
+        response = llm.invoke(prompt_text)
+        content = response.content.strip()
+        
+        logger.debug(f"Raw DeepSeek response: {content[:200]}...")
+        
+        if content.startswith("```json"):
+            content = content.replace("```json", "").replace("```", "").strip()
+        elif content.startswith("```"):
+            content = content.replace("```", "").strip()
+        
+        try:
+            topics = json.loads(content)
+            if not isinstance(topics, list):
+                topics = []
+            
+            topics = topics[:5]
+            
+            _save_keywords_cache(cache_key, topics)
+            
+            logger.info(f"✅ Generated {len(topics)} marketing topics for query '{query_clean}'")
+            
+            return {
+                "query": query_clean,
+                "keywords": topics
+            }
+        except json.JSONDecodeError as e:
+            logger.error(f"❌ JSON decode error: {e}. Content: {content[:200]}")
+            return {
+                "query": query_clean,
+                "keywords": [],
+                "error": f"Error parsing agent response: {str(e)}"
+            }
+        
+    except Exception as e:
+        logger.error(f"❌ Error generating keywords: {e}", exc_info=True)
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        return {
+            "query": query,
+            "keywords": [],
             "error": str(e)
         }
 

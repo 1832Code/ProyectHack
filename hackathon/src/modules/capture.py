@@ -16,6 +16,7 @@ except ImportError:
 from src.modules.supabase_connection import get_supabase_client
 from src.modules.tiktok_search import search_tiktok
 from src.modules.google_search import search_google
+from src.modules.x_search import search_x
 from src.modules.instagram_search import search_instagram_term
 from apify_client import ApifyClient
 
@@ -362,6 +363,95 @@ def capture_instagram(
         return None
 
 
+def capture_x(
+    client: ApifyClient,
+    query: str,
+    max_items: int = 1000,
+    geocode: Optional[str] = None,
+    sort: str = "Latest",
+    tweet_language: str = "es",
+    use_cache: bool = True,
+    force_refresh: bool = False,
+    skip_existing: bool = True
+) -> Optional[int]:
+    """
+    Capture X (Twitter) data and save to metas table.
+    Always makes the API call, but only saves new results.
+    """
+    try:
+        logger.info(f"🔍 Always making API call for X query: {query}")
+        
+        results_dict = search_x(
+            client=client,
+            query=query,
+            max_items=max_items,
+            geocode=geocode,
+            sort=sort,
+            tweet_language=tweet_language,
+            use_cache=use_cache,
+            force_refresh=force_refresh
+        )
+        
+        new_results = results_dict.get("results", [])
+        logger.info(f"📥 Received {len(new_results)} X results from API")
+        
+        if skip_existing:
+            existing_metas = get_meta(id_company=1, label="x", limit=100)
+            existing_tweet_ids = set()
+            
+            for meta in existing_metas:
+                if meta.get("query") == query:
+                    meta_data = meta.get("meta", [])
+                    if isinstance(meta_data, list):
+                        for item in meta_data:
+                            tweet_id = item.get("id") or item.get("tweetId") if isinstance(item, dict) else None
+                            if tweet_id:
+                                existing_tweet_ids.add(str(tweet_id))
+            
+            logger.info(f"📊 Found {len(existing_tweet_ids)} existing X tweets for query: {query}")
+            
+            filtered_results = []
+            for item in new_results:
+                if isinstance(item, dict):
+                    tweet_id = item.get("id") or item.get("tweetId")
+                    if tweet_id and str(tweet_id) not in existing_tweet_ids:
+                        filtered_results.append(item)
+            
+            if len(filtered_results) == 0:
+                logger.info(f"⏭️  No new X results for query '{query}' - all {len(new_results)} results already exist")
+                return None
+            
+            logger.info(f"✅ Found {len(filtered_results)} new X results (out of {len(new_results)})")
+            new_results = filtered_results
+        
+        if len(new_results) == 0:
+            logger.info(f"⏭️  No X results to save for query: {query}")
+            return None
+        
+        supabase = get_supabase_client()
+        
+        data = {
+            "id_company": 1,
+            "label": "x",
+            "query": query,
+            "meta": new_results
+        }
+        
+        response = supabase.table("metas").insert(data).execute()
+        
+        if response.data and len(response.data) > 0:
+            record_id = response.data[0]["id"]
+            logger.info(f"✅ Saved {len(new_results)} new X results to metas table with ID: {record_id}")
+            return record_id
+        else:
+            logger.error("❌ No data returned from insert")
+            return None
+            
+    except Exception as e:
+        logger.error(f"❌ Error capturing X data: {e}", exc_info=True)
+        return None
+
+
 def capture_all(
     client: ApifyClient,
     query: str,
@@ -374,12 +464,12 @@ def capture_all(
     skip_existing: bool = True
 ) -> Dict[str, Optional[int]]:
     """
-    Capture data from all platforms (TikTok, Instagram, Google) for a query.
+    Capture data from all platforms (TikTok, Instagram, Google, X) for a query.
     
     Args:
         client: Apify client instance
         query: Search query
-        platforms: List of platforms to capture (["tiktok", "instagram", "google"]). If None, captures all.
+        platforms: List of platforms to capture (["tiktok", "instagram", "google", "x"]). If None, captures all.
         max_items: Maximum number of results per platform
         country_code: Optional country code
         language_code: Optional language code
@@ -391,7 +481,7 @@ def capture_all(
         Dict with platform names as keys and meta IDs as values (None if skipped or failed)
     """
     if platforms is None:
-        platforms = ["tiktok", "instagram", "google"]
+        platforms = ["tiktok", "instagram", "google", "x"]
     
     results = {}
     
@@ -433,6 +523,20 @@ def capture_all(
                     skip_existing=skip_existing
                 )
                 results["google"] = meta_id
+                
+            elif platform == "x":
+                meta_id = capture_x(
+                    client=client,
+                    query=query,
+                    max_items=max_items,
+                    geocode=None,
+                    sort="Latest",
+                    tweet_language=language_code or "es",
+                    use_cache=use_cache,
+                    force_refresh=force_refresh,
+                    skip_existing=skip_existing
+                )
+                results["x"] = meta_id
                 
             else:
                 logger.warning(f"Unknown platform: {platform}")
