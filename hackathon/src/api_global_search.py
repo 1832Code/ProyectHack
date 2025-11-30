@@ -40,17 +40,6 @@ app = FastAPI(
 )
 
 
-@app.on_event("startup")
-async def startup_event():
-    """Initialize app on startup."""
-    logger.info("🚀 Starting Global Search API...")
-    logger.info(f"PORT: {os.getenv('PORT', '8080')}")
-    logger.info(f"APIFY_API_TOKEN: {'✅ set' if os.getenv('APIFY_API_TOKEN') else '❌ not set'}")
-    logger.info(f"SUPABASE_URL: {'✅ set' if os.getenv('SUPABASE_URL') else '❌ not set'}")
-    logger.info(f"SUPABASE_KEY: {'✅ set' if os.getenv('SUPABASE_KEY') else '❌ not set'}")
-    logger.info("✅ Global Search API started successfully")
-
-
 class GoogleSearchRequest(BaseModel):
     query: str = Field(..., description="Término de búsqueda", min_length=1)
     max_items: int = Field(default=50, ge=1, le=100, description="Máximo de resultados")
