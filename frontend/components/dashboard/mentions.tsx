@@ -124,6 +124,7 @@ export function Mentions() {
   }, [loadMore, hasMore, isLoadingMore, isProviderLoading]);
 
   // Loading state
+  // if (isProviderLoading && companyPosts?.posts.length === 0) {
   if (isProviderLoading) {
     return (
       <section className="pb-8">

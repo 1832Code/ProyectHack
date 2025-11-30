@@ -1,6 +1,6 @@
 // Company Posts API Types
 
-export type Platform = "tiktok" | "instagram" | "twitter" | "youtube" | "google";
+export type Platform = "tiktok" | "instagram" | "twitter" | "youtube" | "google" | "x";
 
 export interface CompanyPostsRequest {
   query: string;

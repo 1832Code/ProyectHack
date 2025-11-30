@@ -26,7 +26,8 @@ export function DashboardHeader({
   backLabel = "Nueva búsqueda",
 }: DashboardHeaderProps) {
   const [isSticky, setIsSticky] = useState(false);
-  const { analytics, isLoadingAnalytics, fetchAnalytics } = useServices();
+  const { analytics, isLoadingAnalytics, fetchAnalytics, fetchCompanyPosts } =
+    useServices();
 
   useEffect(() => {
     fetchAnalytics({
@@ -43,6 +44,22 @@ export function DashboardHeader({
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // useEffect(() => {
+  //   fetchCompanyPosts({
+  //     query: companyName ?? "",
+  //     maxItems: 10,
+  //     platforms: ["tiktok"],
+  //   });
+
+  //   setTimeout(() => {
+  //     fetchCompanyPosts({
+  //       query: companyName ?? "",
+  //       maxItems: 10,
+  //       platforms: ["x"],
+  //     });
+  //   }, 2000);
+  // }, [analytics]);
 
   return (
     <div

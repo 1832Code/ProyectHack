@@ -157,7 +157,7 @@ export default function CodeStreaming() {
         <div className="bg-transparent/20 px-3 md:px-4 py-2 md:py-3 border-b border-slate-700 flex items-center gap-2 backdrop-blur-sm">
           <div className="flex gap-2"></div>
           <div className="ml-4 text-slate-300 text-sm font-mono flex items-center gap-1">
-            <span>component.tsx</span>
+            {/* <span>component.tsx</span> */}
             <div className="flex gap-1 ml-2">
               {[0, 1, 2].map((i) => (
                 <div

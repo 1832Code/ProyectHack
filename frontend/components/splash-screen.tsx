@@ -100,7 +100,7 @@ export function SplashScreen() {
             }}
             className="flex items-center justify-center gap-2 cursor-pointer"
           >
-            <span>Comenzar Análisis</span>
+            <span>Comenzar</span>
             <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
           </div>
         </Button>
@@ -195,11 +195,11 @@ export function SplashScreen() {
 
         {/* Analysis Time Notice */}
 
-        <div className="text-center">
+        {/* <div className="text-center">
           <p className="text-sm text-gray-400 font-medium">
             El análisis tomará aproximadamente 30 segundos
           </p>
-        </div>
+        </div> */}
       </footer>
     </div>
   );

@@ -142,6 +142,7 @@ export async function CompanyConfirmation({
                 categories={company?.agent.keywords}
                 companyName={companyName}
                 country={country}
+                companyLogo={company?.agent.logo_url}
               />
             </div>
             <div className="flex flex-col items-center gap-3 mt-2">

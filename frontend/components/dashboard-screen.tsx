@@ -34,16 +34,21 @@ const platformColors = {
   article: "text-white bg-emerald-500 border-emerald-400 shadow-sm",
 };
 
-export function DashboardScreen({ companyName }: { companyName?: string }) {
+interface DashboardScreenProps {
+  companyName?: string;
+  companyLogo?: string;
+}
+
+export function DashboardScreen({ companyName, companyLogo }: DashboardScreenProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/20 to-purple-50/20">
       <div className="relative z-10">
         {/* Header */}
         <DashboardHeader
           companyName={companyName ?? ""}
-          companyLogo="/rappi-logo.png"
-          companyInitials="RA"
-          subtitle="Perú · 20 de sept."
+          companyLogo={companyLogo ?? ""}
+          companyInitials={companyName?.slice(0, 2).toUpperCase() ?? ""}
+          subtitle="Dashboard"
         />
 
         <div className="px-5 pt-5">
