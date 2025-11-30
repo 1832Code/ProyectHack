@@ -463,7 +463,7 @@ jobs:
         run: |
           echo "Deploying Global Search API (api_global_search.py) to Cloud Run..."
           
-          cp Dockerfile.tiktok Dockerfile
+          cp Dockerfile.global Dockerfile
           
           ENV_VARS="APIFY_API_TOKEN=${APIFY_API_TOKEN}"
           
@@ -641,6 +641,10 @@ jobs:
           fi
           if [ ! -f Dockerfile.tiktok ]; then
             echo "❌ Dockerfile.tiktok not found"
+            exit 1
+          fi
+          if [ ! -f Dockerfile.global ]; then
+            echo "❌ Dockerfile.global not found"
             exit 1
           fi
           echo "✅ All Dockerfiles found"

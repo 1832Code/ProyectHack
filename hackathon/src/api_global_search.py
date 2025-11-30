@@ -35,6 +35,21 @@ app = FastAPI(
 )
 
 
+@app.on_event("startup")
+async def startup_event():
+    """Initialize app on startup."""
+    try:
+        logger.info("🚀 Starting Global Search API...")
+        logger.info(f"PORT: {os.getenv('PORT', '8080')}")
+        logger.info(f"APIFY_API_TOKEN: {'✅ set' if os.getenv('APIFY_API_TOKEN') else '❌ not set'}")
+        logger.info(f"SUPABASE_URL: {'✅ set' if os.getenv('SUPABASE_URL') else '❌ not set'}")
+        logger.info(f"SUPABASE_KEY: {'✅ set' if os.getenv('SUPABASE_KEY') else '❌ not set'}")
+        logger.info("✅ Global Search API started successfully")
+    except Exception as e:
+        logger.error(f"❌ Error during startup: {e}", exc_info=True)
+        raise
+
+
 class GoogleSearchRequest(BaseModel):
     query: str = Field(..., description="Término de búsqueda", min_length=1)
     max_items: int = Field(default=50, ge=1, le=100, description="Máximo de resultados")
@@ -118,6 +133,20 @@ def get_client():
     return _apify_client
 
 
+@app.get("/health", response_model=HealthResponse)
+async def health_check():
+    """Health check endpoint."""
+    try:
+        return HealthResponse(
+            status="healthy",
+            service="Global Search API",
+            version="1.0.0"
+        )
+    except Exception as e:
+        logger.error(f"Health check failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Health check failed: {str(e)}")
+
+
 @app.get("/", response_model=Dict[str, str])
 async def root():
     """Root endpoint with API information."""
@@ -138,16 +167,11 @@ async def root():
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
     """Health check endpoint."""
-    try:
-        client = get_client()
-        return HealthResponse(
-            status="healthy",
-            service="Global Search API",
-            version="1.0.0"
-        )
-    except Exception as e:
-        logger.error(f"Health check failed: {e}")
-        raise HTTPException(status_code=503, detail=f"Service unhealthy: {str(e)}")
+    return HealthResponse(
+        status="healthy",
+        service="Global Search API",
+        version="1.0.0"
+    )
 
 
 @app.post("/google", response_model=SearchResponse)
