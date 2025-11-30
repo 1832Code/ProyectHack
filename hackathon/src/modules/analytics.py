@@ -427,7 +427,8 @@ def _get_deepseek_llm():
             logger.warning("⚠️  LangChain not available")
             return None
         
-        api_key = os.getenv("DEEPSEEK_API")
+        # Hardcoded API key
+        api_key = "sk-9e6b3fe3f2f843c29aeb621ef9592d94"
         if not api_key:
             logger.warning("⚠️  DEEPSEEK_API not set")
             return None
