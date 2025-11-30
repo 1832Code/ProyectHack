@@ -25,7 +25,7 @@ export function SearchScreen() {
   const router = useRouter();
 
   const [companyName, setCompanyName] = useState("");
-  const [country, setCountry] = useState("");
+  const [country, setCountry] = useState("peru");
   // sector removed — no longer required
   const [keywords, setKeywords] = useState("");
   const [errors, setErrors] = useState<{
@@ -133,20 +133,32 @@ export function SearchScreen() {
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
               placeholder="Ej: Mi Empresa S.A.C."
-              className="h-14 px-4 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl text-base text-white placeholder:text-gray-500 focus-visible:ring-2 focus-visible:ring-cyan-500/50 focus-visible:border-cyan-500/50 transition-all hover:border-white/20"
+              aria-label="Nombre de la compañía"
+              className="h-14 px-4 bg-white/6 border border-white/20 rounded-2xl text-base text-white placeholder:text-gray-400 focus:outline-none focus:ring-4 focus:ring-cyan-500/30 focus:border-cyan-300 transition-transform duration-150 hover:scale-[1.01]"
             />
             {/* no visual icon indicator */}
           </div>
           {errors.companyName && (
             <p className="text-xs text-red-400">{errors.companyName}</p>
           )}
+          <p className="text-xs text-slate-400 mt-1">
+            Asegúrate de ingresar el nombre completo para mejores resultados.
+          </p>
         </div>
 
         {/* Country Field - Mejorado */}
         <div className="flex flex-col gap-3">
-          <Label className="text-sm text-gray-300 font-medium">
-            País de operación
-          </Label>
+          <div className="flex items-center justify-between">
+            <Label className="text-sm text-gray-300 font-medium">
+              País de operación
+            </Label>
+            <div className="text-xs text-slate-400">
+              País seleccionado:{" "}
+              <span className="font-semibold text-white ml-1">
+                {countries.find((x) => x.id === country)?.label ?? "—"}
+              </span>
+            </div>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             {countries.map((c) => (
               <button
@@ -157,8 +169,8 @@ export function SearchScreen() {
                   "h-16 rounded-2xl transition-all flex flex-col items-center justify-center gap-1 relative overflow-hidden group",
                   "border backdrop-blur-sm",
                   country === c.id
-                    ? "bg-gradient-to-r from-cyan-500/20 to-purple-600/20 border-cyan-500/40 shadow-lg shadow-cyan-500/20"
-                    : "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20"
+                    ? "bg-gradient-to-r from-cyan-500/30 to-purple-600/30 border-cyan-400 shadow-[0_8px_30px_rgba(99,102,241,0.12)] scale-105 ring-2 ring-cyan-400/30"
+                    : "bg-white/6 border-white/10 hover:bg-white/12 hover:border-white/20"
                 )}
               >
                 {/* no top-right icon indicator */}
@@ -209,7 +221,6 @@ export function SearchScreen() {
           <Button
             onClick={handleSubmit}
             disabled={!isValid || isSubmitting}
-            size="lg"
             className={cn(
               "w-full h-16 rounded-2xl text-lg font-bold transition-all relative overflow-hidden group",
               isValid

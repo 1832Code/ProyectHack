@@ -1,5 +1,4 @@
 "use client";
-
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
@@ -18,6 +17,15 @@ export function SplashScreen() {
 
       <main className="flex flex-col items-center justify-center relative z-10 gap-8 px-4 text-center">
         {/* Company Name */}
+        <div className="flex flex-col items-center ">
+          <Image
+            src="/logo.png"
+            alt="Entropy Logo"
+            width={128}
+            height={128}
+            className="object-contain"
+          />
+        </div>
         <div className="space-y-2">
           <h1 className="text-4xl font-black bg-gradient-to-r from-cyan-400 via-purple-400 to-blue-400 bg-clip-text text-transparent leading-tight tracking-tight">
             Entropy
@@ -34,16 +42,6 @@ export function SplashScreen() {
 
         {/* Logo + reflection */}
         <div className="my-4 flex flex-col items-center gap-2">
-          <div className="w-32 h-32 relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-4 flex items-center justify-center">
-            <Image
-              src="/logo.png"
-              alt="Entropy Logo"
-              width={128}
-              height={128}
-              className="object-contain"
-            />
-          </div>
-
           {/* subtle reflected logo */}
           <div
             aria-hidden
