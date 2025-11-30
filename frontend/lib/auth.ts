@@ -9,35 +9,11 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
     }),
   ],
-  pages: {
-    signIn: '/signin',
-    error: '/signin',
-  },
   callbacks: {
-    async signIn({ user, account }) {
-      // Upsert user into Supabase (server-side). We use email as unique key.
-      try {
-        if (user?.email && supabaseAdmin) {
-          await supabaseAdmin.from("users").upsert(
-            {
-              email: user.email,
-              name: user.name ?? undefined,
-              image: user.image ?? undefined,
-              provider: account?.provider ?? "google",
-              provider_account_id: account?.providerAccountId ?? undefined,
-            },
-            { onConflict: "email" }
-          );
-        }
-      } catch (e) {
-        // don't block sign in for transient DB errors - log server-side
-        console.error("Error upserting user into Supabase:", e);
-      }
-
+    async signIn({ user }) {
       return true;
     },
     async session({ session, token }) {
-      // attach token data to session for client usage
       if (token) {
         // @ts-ignore
         session.user.id = token.sub;
@@ -49,7 +25,6 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
   },
   secret: process.env.NEXTAUTH_SECRET,
-  debug: process.env.NODE_ENV === "development",
 };
 
 export default authOptions;
