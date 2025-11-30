@@ -44,7 +44,7 @@ export default function SkeletonLoader() {
       <div className="space-y-3 md:space-y-4">
         {/* Title */}
         <h2 className="text-lg md:text-xl font-inter text-slate-300 mb-4 md:mb-6">
-          Cargando animación...
+          Cargando ...
         </h2>
 
         {/* Top wide block */}

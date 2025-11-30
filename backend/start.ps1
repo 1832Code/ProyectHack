@@ -32,7 +32,7 @@ try {
 Write-Host ""
 Write-Host "================================================" -ForegroundColor Cyan
 Write-Host "  Backend Flask - Puerto 5000" -ForegroundColor Cyan
-Write-Host "  http://localhost:5000" -ForegroundColor Cyan
+Write-Host "  https://proyecthacks.onrender.com" -ForegroundColor Cyan
 Write-Host "================================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Presiona Ctrl+C para detener el servidor" -ForegroundColor Yellow

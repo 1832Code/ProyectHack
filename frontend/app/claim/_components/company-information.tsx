@@ -98,7 +98,6 @@ export async function CompanyConfirmation({
               </h3>
             </div>
 
-            {/* Badges más pequeños y compactos (ordenadas y color único) */}
             <div className="flex flex-wrap gap-2 justify-center">
               {
                 // Sort keywords alphabetically and show up to 6
@@ -137,7 +136,6 @@ export async function CompanyConfirmation({
             </div>
           </div>
 
-          {/* CTA Button - Sin cambios grandes, solo reducción de márgenes */}
           <div className="text-center">
             <div className="w-full max-w-xs mx-auto">
               <ConfirmCompanyButton
@@ -147,11 +145,9 @@ export async function CompanyConfirmation({
               />
             </div>
             <div className="flex flex-col items-center gap-3 mt-2">
-              <Button asChild className="w-full max-w-xs">
+              <button className="w-full max-w-xs font-medium text-sm text-slate-600 hover:text-slate-800 hover:underline transition-colors">
                 <Link href="/buscar">Volver a buscar otra empresa</Link>
-              </Button>
-
-              {/* bottom back button removed (icon top-left preserved) */}
+              </button>
             </div>
           </div>
         </CardContent>
