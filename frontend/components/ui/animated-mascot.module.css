@@ -1,0 +1,374 @@
+.mascotWrap {
+  position: absolute;
+  right: 3rem;
+  top: 6rem;
+  z-index: 5;
+  pointer-events: none;
+  display: inline-block;
+}
+
+.mascot {
+  width: 100%;
+  height: 100%;
+  transform-origin: center;
+  will-change: transform;
+  /* faster, livelier float */
+  animation: float 2.4s ease-in-out infinite;
+}
+
+.bodyGroup {
+  transform-origin: center;
+}
+
+.body {
+  transform-origin: center;
+  transition: transform 150ms ease;
+}
+
+.eyes {
+  transform-origin: center;
+}
+
+.ear1,
+.ear2 {
+  transform-origin: center;
+  opacity: 0.95;
+}
+
+.tail {
+  transform-origin: left center;
+  opacity: 0.98;
+}
+
+.shadow {
+  width: 70%;
+  height: 10px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 0, 0, 0.12) 0%,
+    rgba(0, 0, 0, 0) 65%
+  );
+  border-radius: 50%;
+  margin-top: 6px;
+  transform-origin: center;
+  animation: shadowPulse 2.4s ease-in-out infinite;
+  opacity: 0.9;
+}
+
+.svgContainer {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.mascotImage {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  will-change: transform, filter;
+  animation: bob 1.6s ease-in-out infinite, lively 3.6s ease-in-out infinite;
+  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.14));
+}
+
+.spark,
+.sparkTwo {
+  position: absolute;
+  width: 22%;
+  height: 22%;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  transform-origin: center;
+}
+.spark {
+  right: -6%;
+  top: 4%;
+  background: radial-gradient(
+    circle at 60% 40%,
+    rgba(255, 255, 255, 0.95),
+    rgba(255, 210, 60, 0.9) 20%,
+    rgba(255, 210, 60, 0.3) 40%,
+    transparent 60%
+  );
+  filter: blur(6px);
+  animation: fizz 1.6s linear infinite;
+  opacity: 0.95;
+}
+.sparkTwo {
+  right: 18%;
+  top: 6%;
+  width: 18%;
+  height: 18%;
+  background: radial-gradient(
+    circle at 55% 40%,
+    rgba(255, 255, 255, 1),
+    rgba(255, 210, 60, 0.9) 25%,
+    rgba(255, 210, 60, 0.15) 50%,
+    transparent 70%
+  );
+  filter: blur(4px);
+  animation: fizzTwo 2s linear infinite;
+  opacity: 0.85;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0) rotate(0);
+  }
+  30% {
+    transform: translateY(-8px) rotate(-1deg);
+  }
+  60% {
+    transform: translateY(-4px) rotate(1deg);
+  }
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+}
+
+@keyframes shadowPulse {
+  0% {
+    transform: scaleX(1);
+    opacity: 0.9;
+  }
+  30% {
+    transform: scaleX(0.78);
+    opacity: 0.6;
+  }
+  60% {
+    transform: scaleX(0.92);
+    opacity: 0.76;
+  }
+  100% {
+    transform: scaleX(1);
+    opacity: 0.9;
+  }
+}
+
+@keyframes bob {
+  0% {
+    transform: translateY(0) translateZ(0) scale(1);
+  }
+  40% {
+    transform: translateY(-8px) scale(1.02);
+  }
+  70% {
+    transform: translateY(-4px) scale(1.01);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes lively {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(1.4deg);
+  }
+  50% {
+    transform: rotate(-1.2deg) translateX(0.4%);
+  }
+  75% {
+    transform: rotate(0.8deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes fizz {
+  0% {
+    transform: scale(0.9) rotate(-8deg);
+    opacity: 0.9;
+  }
+  30% {
+    transform: scale(1.05) rotate(2deg);
+    opacity: 1;
+  }
+  70% {
+    transform: scale(0.93) rotate(-2deg);
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(0.9) rotate(-8deg);
+    opacity: 0.9;
+  }
+}
+
+@keyframes fizzTwo {
+  0% {
+    transform: scale(0.9) rotate(2deg);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.2) rotate(-2deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.9) rotate(2deg);
+    opacity: 0.85;
+  }
+}
+
+/* subtle ear/tail movement */
+.mascot:hover .ear1 {
+  transform: translateY(-2px) rotate(-6deg);
+}
+.mascot:hover .ear2 {
+  transform: translateY(-2px) rotate(6deg);
+}
+.mascot:hover .tail {
+  transform: rotate(10deg) translateX(4px);
+}
+
+/* continuous micro-animations: blink, ear twitch, tail wag, mouth move */
+.eyeBall {
+  transform-origin: center;
+  animation: blink 5s steps(2, end) infinite;
+}
+.eyeSpark {
+  animation: spark 5s linear infinite;
+}
+.eyelidLeft,
+.eyelidRight {
+  animation: eyelid 5s ease-in-out infinite;
+  opacity: 0;
+}
+.tail {
+  animation: tailwag 1.2s ease-in-out infinite;
+}
+.ear1 {
+  animation: ear1twitch 3.2s ease-in-out infinite;
+}
+.ear2 {
+  animation: ear2twitch 3.6s ease-in-out infinite;
+}
+.mouth {
+  transform-origin: center;
+  animation: mouthMove 1.8s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%,
+  96% {
+    transform: scaleY(1);
+  }
+  97% {
+    transform: scaleY(0.08);
+  }
+  100% {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes spark {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  97% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  98% {
+    opacity: 0;
+    transform: translateY(-1px);
+  } /* brief sparkle disappear when blinking */
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes eyelid {
+  0%,
+  96% {
+    opacity: 0;
+  }
+  98% {
+    opacity: 1;
+    transform: translateY(0.5px) scaleY(0.7);
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes tailwag {
+  0% {
+    transform: rotate(0deg) translateX(0);
+  }
+  35% {
+    transform: rotate(9deg) translateX(2px);
+  }
+  60% {
+    transform: rotate(-6deg) translateX(-1px);
+  }
+  100% {
+    transform: rotate(0deg) translateX(0);
+  }
+}
+
+@keyframes ear1twitch {
+  0% {
+    transform: translateY(0) rotate(0);
+  }
+  20% {
+    transform: translateY(-2px) rotate(-6deg);
+  }
+  40% {
+    transform: translateY(0) rotate(0);
+  }
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+}
+
+@keyframes ear2twitch {
+  0% {
+    transform: translateY(0) rotate(0);
+  }
+  25% {
+    transform: translateY(-2px) rotate(6deg);
+  }
+  50% {
+    transform: translateY(0) rotate(0);
+  }
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+}
+
+@keyframes mouthMove {
+  0% {
+    transform: translateY(0) scaleY(1);
+  }
+  50% {
+    transform: translateY(1px) scaleY(0.92);
+  }
+  100% {
+    transform: translateY(0) scaleY(1);
+  }
+}
+
+/* reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .mascot,
+  .shadow,
+  .eyeBall,
+  .eyelidLeft,
+  .eyelidRight,
+  .tail,
+  .ear1,
+  .ear2,
+  .mouth,
+  .mascotImage,
+  .spark,
+  .sparkTwo {
+    animation: none !important;
+  }
+}

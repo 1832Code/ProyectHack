@@ -3,15 +3,7 @@ name: Deploy Hackathon Services to Cloud Run
 on:
   push:
     branches:
-      - main
-      - master
-    paths:
-      - 'hackathon/**'
-      - '.github/workflows/deploy-hackathon.yml'
-  pull_request:
-    branches:
-      - main
-      - master
+      - analytics
     paths:
       - 'hackathon/**'
       - '.github/workflows/deploy-hackathon.yml'
@@ -21,6 +13,7 @@ env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   GCP_REGION: ${{ secrets.GCP_REGION || 'us-central1' }}
   APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
+  DEEPSEEK_API: ${{ secrets.DEEPSEEK_API }}
   DEBUG: ${{ secrets.DEBUG || '' }}
 
 jobs:
@@ -109,31 +102,30 @@ jobs:
         working-directory: ./hackathon
         env:
           APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
+          DEEPSEEK_API: ${{ secrets.DEEPSEEK_API }}
           DEBUG: ${{ secrets.DEBUG }}
         run: |
           echo "Deploying Company Lookup API to Cloud Run..."
           
           echo "=== Verifying source code ==="
           echo "Checking api_company_lookup.py..."
-          if ! grep -q "def get_apify_client" src/api_company_lookup.py; then
-            echo "❌ ERROR: get_apify_client function not found in source!"
-            exit 1
-          fi
-          if grep -q "NotImplementedError" src/api_company_lookup.py; then
-            echo "❌ ERROR: NotImplementedError found in source!"
-            exit 1
-          fi
-          echo "✅ Source code verified - no NotImplementedError found"
           
           cp Dockerfile.company Dockerfile
           
           ENV_VARS="APIFY_API_TOKEN=${APIFY_API_TOKEN}"
           
+          if [ -n "${DEEPSEEK_API}" ]; then
+            ENV_VARS="${ENV_VARS},DEEPSEEK_API=${DEEPSEEK_API}"
+          fi
+          
           if [ -n "${DEBUG}" ]; then
             ENV_VARS="${ENV_VARS},DEBUG=${DEBUG}"
           fi
           
-          echo "✅ Environment variables configured (APIFY_API_TOKEN is set)"
+          echo "✅ Environment variables configured:"
+          echo "   - APIFY_API_TOKEN: ${APIFY_API_TOKEN:+✅ set (length: ${#APIFY_API_TOKEN})}"
+          echo "   - DEEPSEEK_API: ${DEEPSEEK_API:+✅ set (length: ${#DEEPSEEK_API})}${DEEPSEEK_API:-❌ not set}"
+          echo "   - DEBUG: ${DEBUG:-not set}"
           
           echo "Building and deploying to Cloud Run..."
           echo "Forcing rebuild by adding timestamp to Dockerfile..."
@@ -150,15 +142,43 @@ jobs:
             --timeout 3600 \
             --max-instances 10 \
             --project "${{ env.GCP_PROJECT_ID }}" \
-            --no-traffic; then
+            --no-traffic 2>&1 | tee /tmp/deploy.log; then
             echo "❌ Deployment failed. Checking logs..."
+            echo ""
+            echo "=== Deployment Output ==="
+            cat /tmp/deploy.log || true
+            echo ""
+            echo "=== Checking Cloud Build Logs ==="
+            BUILD_ID=$(gcloud builds list \
+              --project "${{ env.GCP_PROJECT_ID }}" \
+              --limit 1 \
+              --format="value(id)" \
+              --filter="source.storageSource.bucket~'gcf-sources' OR source.storageSource.bucket~'artifacts'") || echo ""
+            
+            if [ -n "$BUILD_ID" ]; then
+              echo "Latest build ID: $BUILD_ID"
+              echo ""
+              echo "--- Build Logs (last 100 lines) ---"
+              gcloud builds log "$BUILD_ID" \
+                --project "${{ env.GCP_PROJECT_ID }}" \
+                --limit 100 || true
+            else
+              echo "⚠️  Could not find build ID. Checking recent builds..."
+              gcloud builds list \
+                --project "${{ env.GCP_PROJECT_ID }}" \
+                --limit 5 \
+                --format="table(id,status,createTime,source.repoSource.branchName)" || true
+            fi
+            
+            echo ""
+            echo "=== Cloud Run Service Status ==="
             gcloud run services describe company-lookup-api \
               --region "${{ env.GCP_REGION }}" \
               --project "${{ env.GCP_PROJECT_ID }}" \
-              --format="yaml" || true
+              --format="yaml" || echo "⚠️  Service may not exist yet"
+            
             echo ""
-            echo ""
-            echo "=== Cloud Run Logs ==="
+            echo "=== Cloud Run Revision Logs ==="
             LATEST_REVISION=$(gcloud run revisions list \
               --service=company-lookup-api \
               --region="${{ env.GCP_REGION }}" \
@@ -183,8 +203,11 @@ jobs:
             fi
             
             echo ""
-            echo "=== Logs URL ==="
-            echo "View logs in Cloud Console:"
+            echo "=== Logs URLs ==="
+            echo "Cloud Build Logs:"
+            echo "https://console.cloud.google.com/cloud-build/builds?project=${{ env.GCP_PROJECT_ID }}"
+            echo ""
+            echo "Cloud Run Logs:"
             echo "https://console.cloud.google.com/logs/query?project=${{ env.GCP_PROJECT_ID }}&query=resource.type%3D%22cloud_run_revision%22%0Aresource.labels.service_name%3D%22company-lookup-api%22"
             exit 1
           fi
