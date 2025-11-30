@@ -64,6 +64,20 @@ client = OpenAI(
     base_url="https://api.deepseek.com"
 )
 
+# ==================== SUPABASE CONFIGURATION ====================
+# Configuración para conexión con Supabase
+# Las credenciales deben estar en el archivo .env
+# Descomenta y configura cuando tengas las credenciales listas
+SUPABASE_URL = os.getenv('SUPABASE_URL', config('SUPABASE_URL', default=''))
+SUPABASE_KEY = os.getenv('SUPABASE_ANON_KEY', config('SUPABASE_ANON_KEY', default=''))
+supabase: Client = None
+if SUPABASE_URL and SUPABASE_KEY:
+    try:
+        supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+        print("Cliente Supabase inicializado correctamente")
+    except Exception as e:
+        print(f"Error inicializando Supabase: {e}")
+
 # Configuración de Base de Datos
 DB_CONFIG = {
     'host': 'localhost',
