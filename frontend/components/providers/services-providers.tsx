@@ -4,21 +4,28 @@ import { createContext, useContext, useState, type ReactNode } from "react";
 import {
   fetchCompanyPosts as fetchCompanyPostsApi,
   fetchAnalytics as fetchAnalyticsApi,
+  fetchOpportunity as fetchOpportunityApi,
   type FetchCompanyPostsParams,
   type FetchAnalyticsParams,
+  type FetchOpportunityParams,
 } from "@/lib/api";
 import type { CompanyPostsResponse, CompanyPost } from "@/types/company-posts";
 import type { AnalyticsResponse } from "@/types/analytics";
+import type { OpportunityResponse } from "@/types/opportunity";
 
 interface ServicesContextType {
   isLoading: boolean;
   isLoadingAnalytics: boolean;
+  isLoadingOpportunity: boolean;
   companyPosts: CompanyPostsResponse | null;
   analytics: AnalyticsResponse | null;
+  opportunity: OpportunityResponse | null;
   error: string | null;
   analyticsError: string | null;
+  opportunityError: string | null;
   fetchCompanyPosts: (params: FetchCompanyPostsParams) => Promise<void>;
   fetchAnalytics: (params: FetchAnalyticsParams) => Promise<void>;
+  fetchOpportunity: (params: FetchOpportunityParams) => Promise<void>;
   clearCompanyPosts: () => void;
   resetAll: () => void;
 }
@@ -61,14 +68,17 @@ interface ServicesProviderProps {
 export function ServicesProvider({ children }: ServicesProviderProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false);
+  const [isLoadingOpportunity, setIsLoadingOpportunity] = useState(false);
   const [companyPosts, setCompanyPosts] = useState<CompanyPostsResponse | null>(
     null
   );
 
   const [analytics, setAnalytics] = useState<AnalyticsResponse | null>(null);
+  const [opportunity, setOpportunity] = useState<OpportunityResponse | null>(null);
 
   const [error, setError] = useState<string | null>(null);
   const [analyticsError, setAnalyticsError] = useState<string | null>(null);
+  const [opportunityError, setOpportunityError] = useState<string | null>(null);
 
   const fetchAnalytics = async ({
     keyword,
@@ -100,7 +110,38 @@ export function ServicesProvider({ children }: ServicesProviderProps) {
     }
   };
 
-  
+  const fetchOpportunity = async ({
+    query,
+    idCompany,
+    limit,
+  }: FetchOpportunityParams) => {
+    setIsLoadingOpportunity(true);
+    console.log("🚀 Starting opportunity request...", query);
+
+    try {
+      const response = await fetchOpportunityApi({
+        query,
+        idCompany,
+        limit,
+      });
+
+      console.log("response opportunity", response);
+
+      console.log("✅ Opportunity request successful!");
+      console.log("📦 Opportunity data:", response);
+
+      setOpportunity(response);
+      setOpportunityError(null);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      console.log("❌ Opportunity request failed:", errorMessage);
+      setOpportunityError(errorMessage);
+    } finally {
+      setIsLoadingOpportunity(false);
+      console.log("🏁 Opportunity request completed. Loading state:", false);
+    }
+  };
+
   const fetchCompanyPosts = async ({
     query,
     maxItems,
@@ -120,6 +161,12 @@ export function ServicesProvider({ children }: ServicesProviderProps) {
         keyword: query,
         idCompany: 1,
         limit: 1000,
+      });
+
+      fetchOpportunity({
+        query,
+        idCompany: 1,
+        limit: 100,
       });
 
       console.log("✅ Test request successful!");
@@ -163,21 +210,28 @@ export function ServicesProvider({ children }: ServicesProviderProps) {
   const resetAll = () => {
     setCompanyPosts(null);
     setAnalytics(null);
+    setOpportunity(null);
     setError(null);
     setAnalyticsError(null);
+    setOpportunityError(null);
     setIsLoading(true);
     setIsLoadingAnalytics(false);
+    setIsLoadingOpportunity(false);
   };
 
   const value: ServicesContextType = {
     isLoading,
     isLoadingAnalytics,
+    isLoadingOpportunity,
     companyPosts,
     analytics,
+    opportunity,
     error,
     analyticsError,
+    opportunityError,
     fetchCompanyPosts,
     fetchAnalytics,
+    fetchOpportunity,
     clearCompanyPosts,
     resetAll,
   };

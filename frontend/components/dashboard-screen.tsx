@@ -13,6 +13,7 @@ import {
 import { DashboardHeader } from "@/components/dashboard-header";
 import { Mentions } from "./dashboard/mentions";
 import { DashboardStats } from "./dashboard/stats";
+import { OpportunityFloatingButton } from "@/components/opportunity-float-button";
 
 const PlatformIcons = {
   youtube: Youtube,
@@ -133,6 +134,9 @@ export function DashboardScreen({ companyName }: { companyName?: string }) {
           <Mentions />
         </div>
       </div>
+
+      {/* Floating Action Button */}
+      <OpportunityFloatingButton />
     </div>
   );
 }

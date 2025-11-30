@@ -11,8 +11,14 @@ import type {
   FetchAnalyticsParams,
   AnalyticsResponse,
 } from "@/types/analytics";
+import type {
+  FetchOpportunityParams,
+  OpportunityRequest,
+  OpportunityResponse,
+} from "@/types/opportunity";
 
 export type { FetchAnalyticsParams, AnalyticsResponse };
+export type { FetchOpportunityParams, OpportunityResponse };
 
 const BASE_URL_API =
   process.env.NEXT_PUBLIC_SEARCH_URL_API ||
@@ -167,6 +173,36 @@ export async function fetchAnalytics(
     const errorData = await response.json().catch(() => ({}));
     throw new Error(
       errorData.message || errorData.error || "Failed to fetch analytics"
+    );
+  }
+
+  return response.json();
+}
+
+export async function fetchOpportunity(
+  params: FetchOpportunityParams
+): Promise<OpportunityResponse> {
+  const payload: OpportunityRequest = {
+    query: params.query,
+    id_company: params.idCompany ?? 1,
+    limit: params.limit ?? 100,
+  };
+
+  console.log("payload opportunity", payload);
+
+  // Use local API route as proxy to avoid CORS
+  const response = await fetch("/api/opportunity", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      errorData.message || errorData.error || "Failed to fetch opportunity"
     );
   }
 
