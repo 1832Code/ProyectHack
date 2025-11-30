@@ -17,44 +17,16 @@ app = Flask(__name__)
 CORS(app)
 
 # ==================== CONFIGURACIÓN SUPABASE ====================
-supabase: Client = create_client(
-    os.getenv('SUPABASE_URL'),
-    os.getenv('SUPABASE_KEY')
-)
-
-# Fetch variables
-USER = os.getenv("user")
-PASSWORD = os.getenv("password")
-HOST = os.getenv("host")
-PORT = os.getenv("port")
-DBNAME = os.getenv("dbname")
-
-# Connect to the database
-try:
-    connection = psycopg2.connect(
-        user=USER,
-        password=PASSWORD,
-        host=HOST,
-        port=PORT,
-        dbname=DBNAME
-    )
-    print("Connection successful!")
-    
-    # Create a cursor to execute SQL queries
-    cursor = connection.cursor()
-    
-    # Example query
-    cursor.execute("SELECT NOW();")
-    result = cursor.fetchone()
-    print("Current Time:", result)
-
-    # Close the cursor and connection
-    cursor.close()
-    connection.close()
-    print("Connection closed.")
-
-except Exception as e:
-    print(f"Failed to connect:{e}")
+supabase: Client = None
+if os.getenv('SUPABASE_URL') and os.getenv('SUPABASE_KEY'):
+    try:
+        supabase = create_client(
+            os.getenv('SUPABASE_URL'),
+            os.getenv('SUPABASE_KEY')
+        )
+        print("Supabase client initialized")
+    except Exception as e:
+        print(f"Supabase initialization error: {e}")
 
 
 # ==================== CONFIGURACIÓN ====================
@@ -64,26 +36,13 @@ client = OpenAI(
     base_url="https://api.deepseek.com"
 )
 
-# ==================== SUPABASE CONFIGURATION ====================
-# Configuración para conexión con Supabase
-# Las credenciales deben estar en el archivo .env
-# Descomenta y configura cuando tengas las credenciales listas
-SUPABASE_URL = os.getenv('SUPABASE_URL', config('SUPABASE_URL', default=''))
-SUPABASE_KEY = os.getenv('SUPABASE_ANON_KEY', config('SUPABASE_ANON_KEY', default=''))
-supabase: Client = None
-if SUPABASE_URL and SUPABASE_KEY:
-    try:
-        supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-        print("Cliente Supabase inicializado correctamente")
-    except Exception as e:
-        print(f"Error inicializando Supabase: {e}")
-
-# Configuración de Base de Datos
+# ==================== DATABASE CONFIGURATION ====================
+# Use environment variables for database connection
 DB_CONFIG = {
-    'host': 'localhost',
-    'database': 'search_db',
-    'user': 'root',
-    'password': 'tu_password'
+    'host': os.getenv('DB_HOST', 'localhost'),
+    'database': os.getenv('DB_NAME', 'search_db'),
+    'user': os.getenv('DB_USER', 'root'),
+    'password': os.getenv('DB_PASSWORD', 'password')
 }
 
 # ==================== CONEXIÓN BD ====================
@@ -631,4 +590,5 @@ def results():
 
 # ==================== INICIALIZACIÓN ====================
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=False, host='0.0.0.0', port=port)
