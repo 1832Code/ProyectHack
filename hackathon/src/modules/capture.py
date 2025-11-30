@@ -106,7 +106,7 @@ def capture_tiktok(
 ) -> Optional[int]:
     """
     Capture TikTok data and save to metas table.
-    Only saves if the query doesn't already exist (unless skip_existing=False).
+    Always makes the API call, but only saves new results.
     
     Args:
         client: Apify client instance
@@ -116,17 +116,13 @@ def capture_tiktok(
         country_code: Optional country code for proxy
         use_cache: Whether to use cache if available
         force_refresh: Force refresh ignoring cache
-        skip_existing: If True, skip saving if meta already exists for this query
+        skip_existing: If True, only save if there are new results
         
     Returns:
-        ID of the created record in metas table, None if skipped, or None if failed
+        ID of the created record in metas table, None if no new results or failed
     """
     try:
-        if skip_existing and meta_exists(query, "tiktok", id_company=1):
-            logger.info(f"⏭️  Skipping capture for query '{query}' - already exists in database")
-            return None
-        
-        logger.info(f"Capturing TikTok data for query: {query} (type: {search_type})")
+        logger.info(f"🔍 Always making API call for TikTok query: {query} (type: {search_type})")
         
         results_dict = search_tiktok(
             client=client,
@@ -138,8 +134,41 @@ def capture_tiktok(
             force_refresh=force_refresh
         )
         
-        results = results_dict.get("results", [])
-        logger.info(f"Found {len(results)} TikTok results to save")
+        new_results = results_dict.get("results", [])
+        logger.info(f"📥 Received {len(new_results)} TikTok results from API")
+        
+        if skip_existing:
+            existing_metas = get_meta(id_company=1, label="tiktok", limit=100)
+            existing_video_urls = set()
+            
+            for meta in existing_metas:
+                if meta.get("query") == query:
+                    meta_data = meta.get("meta", [])
+                    if isinstance(meta_data, list):
+                        for item in meta_data:
+                            video_url = item.get("webVideoUrl") if isinstance(item, dict) else None
+                            if video_url:
+                                existing_video_urls.add(video_url)
+            
+            logger.info(f"📊 Found {len(existing_video_urls)} existing videos for query: {query}")
+            
+            filtered_results = []
+            for item in new_results:
+                if isinstance(item, dict):
+                    video_url = item.get("webVideoUrl")
+                    if video_url and video_url not in existing_video_urls:
+                        filtered_results.append(item)
+            
+            if len(filtered_results) == 0:
+                logger.info(f"⏭️  No new TikTok results for query '{query}' - all {len(new_results)} results already exist")
+                return None
+            
+            logger.info(f"✅ Found {len(filtered_results)} new TikTok results (out of {len(new_results)}")
+            new_results = filtered_results
+        
+        if len(new_results) == 0:
+            logger.info(f"⏭️  No TikTok results to save for query: {query}")
+            return None
         
         supabase = get_supabase_client()
         
@@ -147,14 +176,14 @@ def capture_tiktok(
             "id_company": 1,
             "label": "tiktok",
             "query": query,
-            "meta": results
+            "meta": new_results
         }
         
         response = supabase.table("metas").insert(data).execute()
         
         if response.data and len(response.data) > 0:
             record_id = response.data[0]["id"]
-            logger.info(f"✅ Saved TikTok data to metas table with ID: {record_id}")
+            logger.info(f"✅ Saved {len(new_results)} new TikTok results to metas table with ID: {record_id}")
             return record_id
         else:
             logger.error("❌ No data returned from insert")
@@ -177,15 +206,12 @@ def capture_google(
 ) -> Optional[int]:
     """
     Capture Google search data and save to metas table.
+    Always makes the API call, but only saves new results.
     """
     try:
-        if skip_existing and meta_exists(query, "google", id_company=1):
-            logger.info(f"⏭️  Skipping Google capture for query '{query}' - already exists")
-            return None
+        logger.info(f"🔍 Always making API call for Google query: {query}")
         
-        logger.info(f"Capturing Google data for query: {query}")
-        
-        results = search_google(
+        new_results = search_google(
             client=client,
             query=query,
             max_items=max_items,
@@ -195,7 +221,40 @@ def capture_google(
             force_refresh=force_refresh
         )
         
-        logger.info(f"Found {len(results)} Google results to save")
+        logger.info(f"📥 Received {len(new_results)} Google results from API")
+        
+        if skip_existing:
+            existing_metas = get_meta(id_company=1, label="google", limit=100)
+            existing_urls = set()
+            
+            for meta in existing_metas:
+                if meta.get("query") == query:
+                    meta_data = meta.get("meta", [])
+                    if isinstance(meta_data, list):
+                        for item in meta_data:
+                            url = item.get("url") if isinstance(item, dict) else None
+                            if url:
+                                existing_urls.add(url)
+            
+            logger.info(f"📊 Found {len(existing_urls)} existing Google URLs for query: {query}")
+            
+            filtered_results = []
+            for item in new_results:
+                if isinstance(item, dict):
+                    url = item.get("url")
+                    if url and url not in existing_urls:
+                        filtered_results.append(item)
+            
+            if len(filtered_results) == 0:
+                logger.info(f"⏭️  No new Google results for query '{query}' - all {len(new_results)} results already exist")
+                return None
+            
+            logger.info(f"✅ Found {len(filtered_results)} new Google results (out of {len(new_results)})")
+            new_results = filtered_results
+        
+        if len(new_results) == 0:
+            logger.info(f"⏭️  No Google results to save for query: {query}")
+            return None
         
         supabase = get_supabase_client()
         
@@ -203,14 +262,14 @@ def capture_google(
             "id_company": 1,
             "label": "google",
             "query": query,
-            "meta": results
+            "meta": new_results
         }
         
         response = supabase.table("metas").insert(data).execute()
         
         if response.data and len(response.data) > 0:
             record_id = response.data[0]["id"]
-            logger.info(f"✅ Saved Google data to metas table with ID: {record_id}")
+            logger.info(f"✅ Saved {len(new_results)} new Google results to metas table with ID: {record_id}")
             return record_id
         else:
             logger.error("❌ No data returned from insert")
@@ -231,15 +290,12 @@ def capture_instagram(
 ) -> Optional[int]:
     """
     Capture Instagram data and save to metas table.
+    Always makes the API call, but only saves new results.
     """
     try:
-        if skip_existing and meta_exists(query, "instagram", id_company=1):
-            logger.info(f"⏭️  Skipping Instagram capture for query '{query}' - already exists")
-            return None
+        logger.info(f"🔍 Always making API call for Instagram query: {query}")
         
-        logger.info(f"Capturing Instagram data for query: {query}")
-        
-        results = search_instagram_term(
+        new_results = search_instagram_term(
             client=client,
             term=query,
             limit=limit,
@@ -247,7 +303,40 @@ def capture_instagram(
             force_refresh=force_refresh
         )
         
-        logger.info(f"Found {len(results)} Instagram results to save")
+        logger.info(f"📥 Received {len(new_results)} Instagram results from API")
+        
+        if skip_existing:
+            existing_metas = get_meta(id_company=1, label="instagram", limit=100)
+            existing_urls = set()
+            
+            for meta in existing_metas:
+                if meta.get("query") == query:
+                    meta_data = meta.get("meta", [])
+                    if isinstance(meta_data, list):
+                        for item in meta_data:
+                            url = item.get("url") or item.get("displayUrl") if isinstance(item, dict) else None
+                            if url:
+                                existing_urls.add(url)
+            
+            logger.info(f"📊 Found {len(existing_urls)} existing Instagram URLs for query: {query}")
+            
+            filtered_results = []
+            for item in new_results:
+                if isinstance(item, dict):
+                    url = item.get("url") or item.get("displayUrl")
+                    if url and url not in existing_urls:
+                        filtered_results.append(item)
+            
+            if len(filtered_results) == 0:
+                logger.info(f"⏭️  No new Instagram results for query '{query}' - all {len(new_results)} results already exist")
+                return None
+            
+            logger.info(f"✅ Found {len(filtered_results)} new Instagram results (out of {len(new_results)})")
+            new_results = filtered_results
+        
+        if len(new_results) == 0:
+            logger.info(f"⏭️  No Instagram results to save for query: {query}")
+            return None
         
         supabase = get_supabase_client()
         
@@ -255,14 +344,14 @@ def capture_instagram(
             "id_company": 1,
             "label": "instagram",
             "query": query,
-            "meta": results
+            "meta": new_results
         }
         
         response = supabase.table("metas").insert(data).execute()
         
         if response.data and len(response.data) > 0:
             record_id = response.data[0]["id"]
-            logger.info(f"✅ Saved Instagram data to metas table with ID: {record_id}")
+            logger.info(f"✅ Saved {len(new_results)} new Instagram results to metas table with ID: {record_id}")
             return record_id
         else:
             logger.error("❌ No data returned from insert")

@@ -152,13 +152,20 @@ def search_tiktok(
     """
     if use_cache and not force_refresh:
         cache_key = _get_tiktok_cache_key(query, search_type, country_code, max_items)
+        logger.info(f"🔍 Looking for TikTok cache with key: {cache_key[:16]}... (query: '{query}', max_items: {max_items})")
         cached_results = _load_tiktok_cache(cache_key)
         
         if cached_results:
-            logger.info(f"✅✅✅ Using cached TikTok results - NO APIFY API CALLS")
+            cached_results_list = cached_results.get("results", [])
+            logger.info(f"📦 Cache found with {len(cached_results_list)} items, requested: {max_items}")
+            if len(cached_results_list) > max_items:
+                logger.info(f"✅✅✅ Using cached TikTok results - limiting from {len(cached_results_list)} to {max_items} - NO APIFY API CALLS")
+                cached_results["results"] = cached_results_list[:max_items]
+            else:
+                logger.info(f"✅✅✅ Using cached TikTok results ({len(cached_results_list)} items) - NO APIFY API CALLS")
             return cached_results
         
-        logger.warning(f"❌❌❌ TikTok cache MISS - Will make Apify API calls (this will consume Apify credits)")
+        logger.warning(f"❌❌❌ TikTok cache MISS for max_items={max_items} - Will make Apify API calls (this will consume Apify credits)")
         logger.info(f"   TikTok cache key: {cache_key[:16]}...")
     elif force_refresh:
         logger.info(f"🔄 Force refresh requested - ignoring TikTok cache")
@@ -199,9 +206,11 @@ def search_tiktok(
         run = client.actor("clockworks/tiktok-scraper").call(run_input=run_input)
         
         dataset = client.dataset(run["defaultDatasetId"]).list_items()
-        results["results"] = list(dataset.items)
+        all_items = list(dataset.items)
         
-        logger.info(f"Found {len(results['results'])} results for query: {query}")
+        results["results"] = all_items[:max_items] if len(all_items) > max_items else all_items
+        
+        logger.info(f"Found {len(all_items)} results for query: {query}, limiting to {len(results['results'])} (max_items: {max_items})")
         
         if use_cache:
             cache_key = _get_tiktok_cache_key(query, search_type, country_code, max_items)

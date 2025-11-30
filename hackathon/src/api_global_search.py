@@ -334,8 +334,8 @@ async def posts_endpoint(request: CaptureRequest):
         
         if not successful_platforms:
             return CaptureResponse(
-                status="skipped",
-                message=f"Query '{request.query}' ya existe en todas las plataformas. No se guardaron datos nuevos.",
+                status="success",
+                message=f"Query '{request.query}' procesada. No se encontraron resultados nuevos en ninguna plataforma.",
                 captured=captured,
                 skipped_platforms=skipped_platforms,
                 posts=posts
