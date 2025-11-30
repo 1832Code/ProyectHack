@@ -404,6 +404,170 @@ jobs:
           echo "✅ Instagram Search API deployed at: $SERVICE_URL"
           echo "::set-output name=url::$SERVICE_URL"
 
+  deploy-tiktok-search:
+    name: Deploy TikTok Search API
+    runs-on: ubuntu-latest
+    
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Prepare Google Service Account JSON
+        id: prepare-json
+        run: |
+          SECRET_VALUE="${{ secrets.GOOGLE_JSON }}"
+          if [ -z "$SECRET_VALUE" ]; then
+            echo "❌ Error: GOOGLE_JSON secret is empty or not set"
+            exit 1
+          fi
+          if echo "$SECRET_VALUE" | base64 -d > /tmp/gcp-sa-key.json 2>/dev/null && [ -s /tmp/gcp-sa-key.json ]; then
+            echo "✅ Decoded from base64"
+          else
+            echo "$SECRET_VALUE" > /tmp/gcp-sa-key.json
+            echo "✅ Used as plain JSON"
+          fi
+          if [ ! -s /tmp/gcp-sa-key.json ]; then
+            echo "❌ Error: Failed to prepare credentials file"
+            exit 1
+          fi
+          delimiter="EOF_$(date +%s)_$$"
+          echo "credentials_json<<${delimiter}" >> $GITHUB_OUTPUT
+          cat /tmp/gcp-sa-key.json >> $GITHUB_OUTPUT
+          echo "${delimiter}" >> $GITHUB_OUTPUT
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ steps.prepare-json.outputs.credentials_json }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Enable required APIs
+        run: |
+          gcloud services enable run.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
+          gcloud services enable cloudbuild.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
+          gcloud services enable artifactregistry.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
+
+      - name: Deploy TikTok Search Service
+        working-directory: ./hackathon
+        env:
+          APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          DEBUG: ${{ secrets.DEBUG }}
+        run: |
+          echo "Deploying TikTok Search API to Cloud Run..."
+          
+          cp Dockerfile.tiktok Dockerfile
+          
+          ENV_VARS="APIFY_API_TOKEN=${APIFY_API_TOKEN}"
+          
+          if [ -n "${SUPABASE_URL}" ]; then
+            ENV_VARS="${ENV_VARS},SUPABASE_URL=${SUPABASE_URL}"
+          fi
+          
+          if [ -n "${SUPABASE_KEY}" ]; then
+            ENV_VARS="${ENV_VARS},SUPABASE_KEY=${SUPABASE_KEY}"
+          fi
+          
+          if [ -n "${DEBUG}" ]; then
+            ENV_VARS="${ENV_VARS},DEBUG=${DEBUG}"
+          fi
+          
+          echo "✅ Environment variables configured:"
+          echo "   - APIFY_API_TOKEN: ${APIFY_API_TOKEN:+✅ set (length: ${#APIFY_API_TOKEN})}"
+          echo "   - SUPABASE_URL: ${SUPABASE_URL:+✅ set}${SUPABASE_URL:-❌ not set}"
+          echo "   - SUPABASE_KEY: ${SUPABASE_KEY:+✅ set (length: ${#SUPABASE_KEY})}${SUPABASE_KEY:-❌ not set}"
+          echo "   - DEBUG: ${DEBUG:-not set}"
+          
+          echo "Building and deploying to Cloud Run..."
+          echo "Forcing rebuild by adding timestamp to Dockerfile..."
+          echo "# Build timestamp: $(date +%s)" >> Dockerfile
+          
+          SERVICE_EXISTS=$(gcloud run services list --project="${{ env.GCP_PROJECT_ID }}" --region="${{ env.GCP_REGION }}" --filter="metadata.name=tiktok-search-api" --format="value(metadata.name)" || echo "")
+          
+          DEPLOY_FLAGS=""
+          if [ -n "$SERVICE_EXISTS" ]; then
+            echo "Service 'tiktok-search-api' already exists. Deploying with --no-traffic."
+            DEPLOY_FLAGS="--no-traffic"
+          else
+            echo "Service 'tiktok-search-api' does not exist. Creating new service."
+          fi
+          
+          if ! gcloud run deploy tiktok-search-api \
+            --source . \
+            --region "${{ env.GCP_REGION }}" \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars "${ENV_VARS}" \
+            --memory 2Gi \
+            --cpu 2 \
+            --timeout 3600 \
+            --max-instances 10 \
+            --project "${{ env.GCP_PROJECT_ID }}" \
+            ${DEPLOY_FLAGS} 2>&1 | tee /tmp/deploy.log; then
+            echo "❌ Deployment failed. Checking logs..."
+            echo ""
+            echo "=== Deployment Output ==="
+            cat /tmp/deploy.log || true
+            echo ""
+            echo "=== Checking Cloud Build Logs ==="
+            BUILD_ID=$(gcloud builds list \
+              --project "${{ env.GCP_PROJECT_ID }}" \
+              --limit 1 \
+              --format="value(id)" \
+              --filter="source.storageSource.bucket~'gcf-sources' OR source.storageSource.bucket~'artifacts'") || echo ""
+            
+            if [ -n "$BUILD_ID" ]; then
+              echo "Latest build ID: $BUILD_ID"
+              echo ""
+              echo "--- Build Logs (last 100 lines) ---"
+              gcloud builds log "$BUILD_ID" \
+                --project "${{ env.GCP_PROJECT_ID }}" \
+                --limit 100 || true
+            fi
+            
+            echo ""
+            echo "=== Cloud Run Service Status ==="
+            gcloud run services describe tiktok-search-api \
+              --region "${{ env.GCP_REGION }}" \
+              --project "${{ env.GCP_PROJECT_ID }}" \
+              --format="yaml" || echo "⚠️  Service may not exist yet"
+            
+            echo ""
+            echo "=== Logs URLs ==="
+            echo "Cloud Build Logs:"
+            echo "https://console.cloud.google.com/cloud-build/builds?project=${{ env.GCP_PROJECT_ID }}"
+            echo ""
+            echo "Cloud Run Logs:"
+            echo "https://console.cloud.google.com/logs/query?project=${{ env.GCP_PROJECT_ID }}&query=resource.type%3D%22cloud_run_revision%22%0Aresource.labels.service_name%3D%22tiktok-search-api%22"
+            exit 1
+          fi
+          
+          echo "✅ Deployment successful."
+          if [ -n "$SERVICE_EXISTS" ]; then
+            echo "Setting traffic to latest revision..."
+            gcloud run services update-traffic tiktok-search-api \
+              --to-latest \
+              --region "${{ env.GCP_REGION }}" \
+              --project "${{ env.GCP_PROJECT_ID }}"
+          fi
+          rm -f Dockerfile
+
+      - name: Get service URL
+        run: |
+          SERVICE_URL=$(gcloud run services describe tiktok-search-api \
+            --region "${{ env.GCP_REGION }}" \
+            --project "${{ env.GCP_PROJECT_ID }}" \
+            --format 'value(status.url)')
+          echo "✅ TikTok Search API deployed at: $SERVICE_URL"
+          echo "::set-output name=url::$SERVICE_URL"
+
   validate:
     name: Validate deployment configuration
     runs-on: ubuntu-latest
@@ -454,6 +618,10 @@ jobs:
             echo "❌ src/api_instagram_search.py not found"
             exit 1
           fi
+          if [ ! -f src/api_global_search.py ]; then
+            echo "❌ src/api_global_search.py not found"
+            exit 1
+          fi
           echo "✅ All API files found"
       
       - name: Validate Dockerfiles
@@ -469,6 +637,10 @@ jobs:
           fi
           if [ ! -f Dockerfile.instagram ]; then
             echo "❌ Dockerfile.instagram not found"
+            exit 1
+          fi
+          if [ ! -f Dockerfile.tiktok ]; then
+            echo "❌ Dockerfile.tiktok not found"
             exit 1
           fi
           echo "✅ All Dockerfiles found"
