@@ -2,7 +2,9 @@ import type React from "react";
 import type { Metadata, Viewport } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
+import { ServicesProvider } from "@/components/providers/services-providers";
 import "./globals.css";
+
 import AuthProvider from "@/components/auth-provider";
 
 export const metadata: Metadata = {
@@ -30,7 +32,9 @@ export default function RootLayout({
       <body
         className={`${GeistSans.variable} ${GeistMono.variable} font-sans antialiased`}
       >
-        <AuthProvider>{children}</AuthProvider>
+        <ServicesProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </ServicesProvider>
       </body>
     </html>
   );

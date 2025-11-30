@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { SearchCommand } from "@/components/search-command";
 import { cn } from "@/lib/utils";
+import { useServices } from "@/components/providers/services-providers";
 
 const countries = [
   { id: "peru", label: "Perú" },
@@ -25,6 +26,12 @@ export function SearchScreen() {
   const { data: session } = useSession();
   const [showProfile, setShowProfile] = useState(false);
   const router = useRouter();
+  const { resetAll } = useServices();
+
+  // Reset all data when navigating to search page
+  useEffect(() => {
+    resetAll();
+  }, [resetAll]);
 
   const [companyName, setCompanyName] = useState("");
   const [country, setCountry] = useState("peru");

@@ -1,7 +1,9 @@
 "use client";
 
+import { useServices } from "@/components/providers/services-providers";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { useEffect, useRef } from "react";
 
 interface ConfirmCompanyButtonProps {
   categories?: string[];
@@ -14,7 +16,10 @@ export function ConfirmCompanyButton({
   companyName,
   country,
 }: ConfirmCompanyButtonProps) {
+  const { fetchCompanyPosts, resetAll } = useServices();
   const router = useRouter();
+  const hasInitialized = useRef(false);
+
   const handleConfirmCompany = () => {
     const payload = {
       companyName,
@@ -38,6 +43,23 @@ export function ConfirmCompanyButton({
       }
     })()
   }; 
+
+  useEffect(() => {
+    // Only run once on mount - reset all data and start fresh fetch
+    if (hasInitialized.current) return;
+    hasInitialized.current = true;
+
+    // Reset all previous analytics and posts data
+    resetAll();
+
+    // Fetch fresh company posts
+    fetchCompanyPosts({
+      query: companyName ?? "",
+      maxItems: 10,
+      platforms: ["google"],
+    });
+  }, [companyName, fetchCompanyPosts, resetAll]);
+
 
   return (
     <Button
