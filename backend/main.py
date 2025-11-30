@@ -11,6 +11,16 @@ import psycopg2
 from supabase import create_client, Client
 from functools import wraps
 
+# Importar servicios
+from supabase_client import (
+    get_supabase_client, 
+    get_component_from_db, 
+    get_all_component_keywords, 
+    save_component_to_db, 
+    save_search_history
+)
+from company_lookup_service import lookup_company, extract_api_data
+
 load_dotenv()
 
 app = Flask(__name__)
@@ -64,22 +74,8 @@ client = OpenAI(
     base_url="https://api.deepseek.com"
 )
 
-# Configuración de Base de Datos
-DB_CONFIG = {
-    'host': 'localhost',
-    'database': 'search_db',
-    'user': 'root',
-    'password': 'tu_password'
-}
-
-# ==================== CONEXIÓN BD ====================
-def get_db_connection():
-    try:
-        conn = mysql.connector.connect(**DB_CONFIG)
-        return conn
-    except Error as e:
-        print(f"Error conectando a BD: {e}")
-        return None
+# Obtener cliente de Supabase
+supabase = get_supabase_client()
 
 # ==================== MIDDLEWARE DE AUTENTICACIÓN ====================
 def require_auth(f):
@@ -203,7 +199,7 @@ Retorna SOLO un JSON con este formato:
         
         response_text = response.choices[0].message.content.strip()
         if response_text.startswith('```'):
-            response_text = response_text.split('```')[1]
+            response_text = response.split('```')[1]
             if response_text.startswith('json'):
                 response_text = response_text[4:]
         
@@ -212,16 +208,25 @@ Retorna SOLO un JSON con este formato:
         print(f"Error en búsqueda con IA: {e}")
         return None
 
-def generate_final_results_with_ai(keyword_results, company_name, sector, country):
+def generate_final_results_with_ai(keyword_results, company_name, sector, country, external_data=None):
     """
-    Genera resultados finales consolidados basados en todas las búsquedas
+    Genera resultados finales consolidados basados en todas las búsquedas y datos externos
     """
-    prompt = f"""Basándote en los siguientes resultados de búsqueda de palabras clave, 
+    external_context = ""
+    if external_data:
+        external_context = f"""
+Información adicional de API externa:
+Descripción: {external_data.get('description')}
+Keywords sugeridos: {', '.join(external_data.get('suggested_keywords', []))}
+"""
+
+    prompt = f"""Basándote en los siguientes resultados de búsqueda de palabras clave y datos externos, 
 genera un análisis consolidado para la empresa:
 
 Empresa: {company_name}
 Sector: {sector}
 País: {country}
+{external_context}
 
 Resultados de palabras clave:
 {json.dumps(keyword_results, indent=2)}
@@ -244,7 +249,7 @@ Genera un análisis general y recomendaciones. Retorna SOLO un JSON con este for
         
         response_text = response.choices[0].message.content.strip()
         if response_text.startswith('```'):
-            response_text = response_text.split('```')[1]
+            response_text = response.split('```')[1]
             if response_text.startswith('json'):
                 response_text = response_text[4:]
         
@@ -363,12 +368,19 @@ def save_search_history(company_name, country, sector, keywords, results):
         conn.close()
 
 # ==================== LÓGICA PRINCIPAL ====================
-def process_keywords(keyword_input, sector, country):
+def process_keywords(keyword_input, sector, country, suggested_keywords=None):
     """
     Procesa las palabras clave: analiza, busca en BD o ejecuta nueva búsqueda
     """
     # 1. Analizar y optimizar keywords con IA
     optimized_keywords = analyze_keywords_with_ai(keyword_input)
+    
+    # Agregar keywords sugeridos por el API externo si existen
+    if suggested_keywords:
+        # Combinar y eliminar duplicados
+        optimized_keywords = list(set(optimized_keywords + suggested_keywords))
+        # Limitar a un número razonable (ej. 8)
+        optimized_keywords = optimized_keywords[:8]
     
     if not optimized_keywords:
         return []
@@ -385,10 +397,18 @@ def process_keywords(keyword_input, sector, country):
         
         if db_component:
             # Ya existe, usar datos guardados
+            # Supabase devuelve dict, campo1 ya es JSON (dict) si es JSONB
+            data_content = db_component['campo1']
+            if isinstance(data_content, str):
+                try:
+                    data_content = json.loads(data_content)
+                except:
+                    pass
+            
             results.append({
                 'keyword': keyword,
                 'source': 'database',
-                'data': json.loads(db_component['campo1'])
+                'data': data_content
             })
         else:
             # 3.2 Verificar si es sinónimo de alguno existente
@@ -399,11 +419,18 @@ def process_keywords(keyword_input, sector, country):
                     # Usar el componente del sinónimo
                     synonym_component = get_component_from_db(synonym_check['matched_word'])
                     if synonym_component:
+                        data_content = synonym_component['campo1']
+                        if isinstance(data_content, str):
+                            try:
+                                data_content = json.loads(data_content)
+                            except:
+                                pass
+                                
                         results.append({
                             'keyword': keyword,
                             'original_keyword': synonym_check['matched_word'],
                             'source': 'synonym',
-                            'data': json.loads(synonym_component['campo1'])
+                            'data': data_content
                         })
                         continue
             
@@ -427,7 +454,7 @@ def process_keywords(keyword_input, sector, country):
 def home():
     return jsonify({
         'status': 'online',
-        'message': 'API de búsqueda empresarial'
+        'message': 'API de búsqueda empresarial con Supabase y Company Lookup'
     })
 
 # ==================== ENDPOINTS DE AUTENTICACIÓN ====================
@@ -544,52 +571,68 @@ def search():
         sector = data['sector']
         keyword_input = data['keyword']
         
-        # Procesar keywords
-        keyword_results = process_keywords(keyword_input, sector, country)
+        # 1. Consultar API externa de empresas
+        print(f"Consultando API externa para: {company_name}")
+        api_response = lookup_company(company_name, [keyword_input], country)
+        external_data = extract_api_data(api_response)
+        
+        suggested_keywords = []
+        if external_data:
+            print("Datos externos encontrados")
+            suggested_keywords = external_data.get('suggested_keywords', [])
+        
+        # 2. Procesar keywords (combinando input usuario + sugerencias API)
+        keyword_results = process_keywords(keyword_input, sector, country, suggested_keywords)
         
         if not keyword_results:
             return jsonify({'error': 'No se pudieron procesar las palabras clave'}), 500
         
-        # Generar análisis final consolidado
+        # 3. Generar análisis final consolidado (incluyendo datos externos)
         final_results = generate_final_results_with_ai(
             keyword_results, 
             company_name, 
             sector, 
-            country
+            country,
+            external_data
         )
         
-        # Preparar respuesta
+        # 4. Preparar respuesta
         response = {
             'company_name': company_name,
             'country': country,
             'sector': sector,
+            'external_data': external_data,  # Incluir datos del API externo
             'keyword_analysis': keyword_results,
             'final_analysis': final_results,
             'timestamp': None
         }
         
-        #Crear la empresa en Supabase
+        # 5. Crear la empresa en Supabase
         company_data = {
             'name': company_name,
             'country': country,
             'sector': sector,
             'keywords': {
                 'original': keyword_input,
-                'processed': [kr['keyword'] for kr in keyword_results]
+                'processed': [kr['keyword'] for kr in keyword_results],
+                'suggested': suggested_keywords
             },
             'search_results': response
         }
         
         company_result = supabase.table('companies').insert(company_data).execute()
-        company_id = company_result.data[0]['id']
         
-        # Actualizar el perfil del usuario con esta empresa
-        supabase.table('user_profiles')\
-            .update({'company_id': company_id})\
-            .eq('id', user_id)\
-            .execute()
+        company_id = None
+        if company_result.data:
+            company_id = company_result.data[0]['id']
+            
+            # Actualizar el perfil del usuario con esta empresa
+            supabase.table('user_profiles')\
+                .update({'company_id': company_id})\
+                .eq('id', user_id)\
+                .execute()
         
-        #Guardar en historial
+        # 6. Guardar en historial
         save_search_history(
             company_name, 
             country, 
@@ -606,6 +649,8 @@ def search():
         
     except Exception as e:
         print(f"Error en endpoint /search: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': 'Error interno del servidor'}), 500
 
 @app.route('/results', methods=['GET'])
