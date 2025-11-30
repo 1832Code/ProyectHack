@@ -16,17 +16,22 @@ try:
 except ImportError:
     pass
 
-from modules.tiktok_search import search_tiktok
-from modules.google_search import search_google
-from modules.instagram_search import search_instagram_term, search_instagram_hashtag, search_instagram_profile
-from modules.capture import capture_all
-from modules.latest import process_latest_metas, get_posts
-
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+try:
+    from modules.tiktok_search import search_tiktok
+    from modules.google_search import search_google
+    from modules.instagram_search import search_instagram_term, search_instagram_hashtag, search_instagram_profile
+    from modules.capture import capture_all
+    from modules.latest import process_latest_metas, get_posts
+    logger.info("✅ All modules imported successfully")
+except ImportError as e:
+    logger.error(f"❌ Failed to import modules: {e}", exc_info=True)
+    raise
 
 app = FastAPI(
     title="Global Search API",
@@ -38,16 +43,12 @@ app = FastAPI(
 @app.on_event("startup")
 async def startup_event():
     """Initialize app on startup."""
-    try:
-        logger.info("🚀 Starting Global Search API...")
-        logger.info(f"PORT: {os.getenv('PORT', '8080')}")
-        logger.info(f"APIFY_API_TOKEN: {'✅ set' if os.getenv('APIFY_API_TOKEN') else '❌ not set'}")
-        logger.info(f"SUPABASE_URL: {'✅ set' if os.getenv('SUPABASE_URL') else '❌ not set'}")
-        logger.info(f"SUPABASE_KEY: {'✅ set' if os.getenv('SUPABASE_KEY') else '❌ not set'}")
-        logger.info("✅ Global Search API started successfully")
-    except Exception as e:
-        logger.error(f"❌ Error during startup: {e}", exc_info=True)
-        raise
+    logger.info("🚀 Starting Global Search API...")
+    logger.info(f"PORT: {os.getenv('PORT', '8080')}")
+    logger.info(f"APIFY_API_TOKEN: {'✅ set' if os.getenv('APIFY_API_TOKEN') else '❌ not set'}")
+    logger.info(f"SUPABASE_URL: {'✅ set' if os.getenv('SUPABASE_URL') else '❌ not set'}")
+    logger.info(f"SUPABASE_KEY: {'✅ set' if os.getenv('SUPABASE_KEY') else '❌ not set'}")
+    logger.info("✅ Global Search API started successfully")
 
 
 class GoogleSearchRequest(BaseModel):
