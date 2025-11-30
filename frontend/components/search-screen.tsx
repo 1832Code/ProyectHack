@@ -4,6 +4,7 @@ import type React from "react";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,6 +22,8 @@ const countries = [
 // sectors removed per request (UI simplified)
 
 export function SearchScreen() {
+  const { data: session } = useSession();
+  const [showProfile, setShowProfile] = useState(false);
   const router = useRouter();
 
   const [companyName, setCompanyName] = useState("");
@@ -87,46 +90,147 @@ export function SearchScreen() {
       {/* Grid pattern overlay */}
       <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,black,transparent)]" />
 
-      <header className="mb-6 relative z-10">
-        <Button
-          variant="ghost"
-          size="sm"
-          asChild
-          className="mb-4 -ml-2 text-gray-300 hover:text-white hover:bg-white/10 rounded-full px-3 backdrop-blur-sm border border-white/10"
-        >
-          <Link href="/">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="mr-1"
-            >
-              <path d="m12 19-7-7 7-7" />
-              <path d="M19 12H5" />
-            </svg>
-            Volver
-          </Link>
-        </Button>
+      <header className="mb-6 relative z-10 flex flex items-start justify-between">
+        <div className="flex flex-col">
+          <Button
+            variant="ghost"
+            size="sm"
+            asChild
+            className=" w-32  mb-4 -ml-2 text-gray-300 hover:text-white hover:bg-white/10 rounded-full px-3 backdrop-blur-sm border border-white/10"
+          >
+            <Link href="/">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="mr-1"
+              >
+                <path d="m12 19-7-7 7-7" />
+                <path d="M19 12H5" />
+              </svg>
+              Volver
+            </Link>
+          </Button>
 
-        <div className="space-y-2">
-          <div className="inline-block px-3 py-1 bg-cyan-500/10 border border-cyan-500/20 rounded-full backdrop-blur-sm">
-            <span className="text-cyan-400 text-xs font-semibold tracking-wider">
-              PASO 1 DE 1
-            </span>
+          {/*vista panel de busqueda*/}
+          <div className="space-y-2 ">
+            <div className="inline-block px-3 py-1 bg-cyan-500/10 border border-cyan-500/20 rounded-full backdrop-blur-sm">
+              <span className="text-cyan-400 text-xs font-semibold tracking-wider">
+                PASO 1 DE 1
+              </span>
+            </div>
+            <h1 className="text-4xl font-bold text-white tracking-tight leading-tight">
+              Cuéntanos sobre
+              <br />
+              <span className="bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
+                tu negocio
+              </span>
+            </h1>
           </div>
-          <h1 className="text-4xl font-bold text-white tracking-tight leading-tight">
-            Cuéntanos sobre
-            <br />
-            <span className="bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
-              tu negocio
-            </span>
-          </h1>
+        </div>
+
+        {/*vista de usuario perfil*/}
+        <div className="ml-4 relative">
+          {session?.user ? (
+            <div className="flex items-center gap-2">
+              <button
+                aria-label="Perfil"
+                onClick={() => setShowProfile((s) => !s)}
+                className="rounded-full overflow-hidden border border-white/10 shadow-sm bg-white/5 p-0 w-10 h-10 flex items-center justify-center"
+              >
+                {session.user.image ? (
+                  // small image
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={session.user.image}
+                    alt={session.user?.name ?? session.user?.email ?? "avatar"}
+                    className="w-10 h-10 object-cover rounded-full"
+                  />
+                ) : (
+                  <div className="w-10 h-10 flex items-center justify-center bg-slate-700 rounded-full text-sm font-semibold text-white">
+                    {(
+                      (session.user.name ?? session.user.email ?? "").match(
+                        /(^|\s)([A-Za-z])/g
+                      ) || []
+                    )
+                      .slice(0, 2)
+                      .map((m) => m.trim().slice(0, 1).toUpperCase())
+                      .join("")}
+                  </div>
+                )}
+              </button>
+
+              {showProfile && (
+                <div className="absolute right-0 top-12 w-64 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-4 shadow-xl z-20">
+                  <div className="flex items-center gap-3 mb-4">
+                    {session.user.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={session.user.image}
+                        className="w-12 h-12 rounded-full object-cover"
+                        alt="avatar"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-slate-700 flex items-center justify-center text-white font-semibold text-sm">
+                        {(
+                          (session.user.name ?? session.user.email ?? "").match(
+                            /(^|\s)([A-Za-z])/g
+                          ) || []
+                        )
+                          .slice(0, 2)
+                          .map((m) => m.trim().slice(0, 1).toUpperCase())
+                          .join("")}
+                      </div>
+                    )}
+
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-semibold text-white truncate">
+                        {session.user.name ?? session.user.email}
+                      </div>
+                      {session.user.email && (
+                        <div className="text-xs text-slate-300 truncate">
+                          {session.user.email}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="border-t border-white/10 pt-3">
+                    <button
+                      onClick={() => {
+                        setShowProfile(false);
+                        signOut({ callbackUrl: "/" });
+                      }}
+                      className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-300 hover:text-white hover:bg-white/10 transition-all duration-200"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                        <polyline points="16,17 21,12 16,7" />
+                        <line x1="21" x2="9" y1="12" y2="12" />
+                      </svg>
+                      Cerrar sesión
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : null}
         </div>
       </header>
 

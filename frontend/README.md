@@ -1,59 +1,102 @@
-# Fashion app screen
+# 🚀 Entropy Frontend - Sistema de Búsqueda Empresarial
 
-*Automatically synced with your [v0.app](https://v0.app) deployments*
+Frontend de la aplicación Entropy desarrollado con Next.js para el Hackathon UNHEVAL.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/maxr-evenbizs-projects/v0-fashion-app-screen)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/q5banjBDrNB)
+## 🌐 Despliegue
 
-## Overview
+**URL de Producción:** https://proyecthacks.onrender.com
 
-This repository will stay in sync with your deployed chats on [v0.app](https://v0.app).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.app](https://v0.app).
+## 🛠️ Tecnologías
 
-## Deployment
+- **Next.js** 16.0.3 - Framework React
+- **NextAuth.js** - Autenticación con Google OAuth
+- **Tailwind CSS** - Estilos
+- **TypeScript** - Tipado estático
+- **Supabase** - Base de datos
 
-Your project is live at:
+## 🚀 Instalación Local
 
-**[https://vercel.com/maxr-evenbizs-projects/v0-fashion-app-screen](https://vercel.com/maxr-evenbizs-projects/v0-fashion-app-screen)**
-
-## Build your app
-
-Continue building your app on:
-
-**[https://v0.app/chat/q5banjBDrNB](https://v0.app/chat/q5banjBDrNB)**
-
-## How It Works
-
-1. Create and modify your project using [v0.app](https://v0.app)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
-
-## Authentication (Google Sign-in)
-
-This project now includes a real Google sign-in flow powered by NextAuth.
-
-To enable it locally, do the following:
-
-1. Install the dependency inside the `frontend` folder:
-
+1. **Clonar el repositorio**
 ```bash
+git clone <tu-repo>
 cd frontend
-pnpm add next-auth    # or `npm i next-auth` / `yarn add next-auth`
 ```
 
-2. Create a `.env.local` in `frontend/` (you can copy `.env.local.example`) and set:
-
-```
-NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=replace-with-a-secure-random-string
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
+2. **Instalar dependencias**
+```bash
+npm install
 ```
 
-3. In Google Cloud Console create OAuth 2.0 credentials and set the redirect URI to:
-	- `http://localhost:3000/api/auth/callback/google`
+3. **Configurar variables de entorno**
+```bash
+cp .env.example .env
+```
 
-4. Restart the dev server and click "Comenzar Análisis" → you'll be sent to the real Google sign-in flow.
+Edita `.env` con tus credenciales:
+- Google OAuth (Client ID y Secret)
+- Supabase (URL y Keys)
+- NextAuth Secret
 
-If you want, I can also integrate a persistent database adapter (e.g. Prisma) so sessions and users are stored server-side.
+4. **Ejecutar en desarrollo**
+```bash
+npm run dev
+```
+
+## 📦 Scripts Disponibles
+
+- `npm run dev` - Servidor de desarrollo
+- `npm run build` - Build de producción
+- `npm start` - Servidor de producción
+- `npm run lint` - Linter
+
+## 🔧 Configuración para Despliegue
+
+### Variables de Entorno Requeridas
+
+```env
+NEXTAUTH_URL=https://proyecthacks.onrender.com
+NEXTAUTH_SECRET=tu-secret-seguro
+GOOGLE_CLIENT_ID=tu-google-client-id
+GOOGLE_CLIENT_SECRET=tu-google-client-secret
+SUPABASE_URL=https://tu-proyecto.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=tu-service-role-key
+SUPABASE_ANON_KEY=tu-anon-key
+```
+
+### Render.com
+
+1. Conecta tu repositorio de GitHub
+2. Configura las variables de entorno
+3. Build Command: `npm run build`
+4. Start Command: `npm start`
+
+## 🔐 Seguridad
+
+- Variables sensibles excluidas del repositorio
+- Headers de seguridad configurados
+- Autenticación OAuth segura
+- Validación de dominios para imágenes
+
+## 📁 Estructura
+
+```
+frontend/
+├── app/                 # App Router de Next.js
+├── components/          # Componentes React
+├── lib/                # Utilidades y configuración
+├── public/             # Archivos estáticos
+├── .env.example        # Ejemplo de variables de entorno
+└── next.config.mjs     # Configuración de Next.js
+```
+
+## 🤝 Contribución
+
+1. Fork del proyecto
+2. Crear rama feature (`git checkout -b feature/nueva-funcionalidad`)
+3. Commit cambios (`git commit -m 'Agregar nueva funcionalidad'`)
+4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
+5. Abrir Pull Request
+
+## 📄 Licencia
+
+Proyecto educativo para Hackathon UNHEVAL.

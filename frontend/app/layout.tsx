@@ -1,14 +1,15 @@
-import type React from "react"
-import type { Metadata, Viewport } from "next"
-import { GeistSans } from "geist/font/sans"
-import { GeistMono } from "geist/font/mono"
-import "./globals.css"
+import type React from "react";
+import type { Metadata, Viewport } from "next";
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
+import "./globals.css";
+import AuthProvider from "@/components/auth-provider";
 
 export const metadata: Metadata = {
   title: "Señal | Inteligencia de mercado",
   description: "Detecta señales del mercado antes que tu competencia.",
-    generator: 'v0.app'
-}
+  generator: "v0.app",
+};
 
 export const viewport: Viewport = {
   themeColor: "#faf8f5",
@@ -16,16 +17,20 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-}
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
   return (
     <html lang="es">
-      <body className={`${GeistSans.variable} ${GeistMono.variable} font-sans antialiased`}>{children}</body>
+      <body
+        className={`${GeistSans.variable} ${GeistMono.variable} font-sans antialiased`}
+      >
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
-  )
+  );
 }
