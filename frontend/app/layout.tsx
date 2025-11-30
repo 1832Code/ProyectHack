@@ -6,9 +6,10 @@ import "./globals.css";
 import AuthProvider from "@/components/auth-provider";
 
 export const metadata: Metadata = {
-  title: "Señal | Inteligencia de mercado",
-  description: "Detecta señales del mercado antes que tu competencia.",
-  generator: "v0.app",
+  title: "Entropy | Sistema de Búsqueda Empresarial",
+  description: "Democratizar el acceso a las oportunidades que surgen del Internet para las PYMES",
+  generator: "Entropy",
+  metadataBase: new URL('https://proyecthacks.onrender.com'),
 };
 
 export const viewport: Viewport = {
