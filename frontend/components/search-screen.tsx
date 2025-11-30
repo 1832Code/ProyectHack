@@ -6,10 +6,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-// removed ToggleGroup imports because countries use simple buttons now
+import { SearchCommand } from "@/components/search-command";
 import { cn } from "@/lib/utils";
 
 const countries = [
@@ -65,9 +64,18 @@ export function SearchScreen() {
 
     setIsSubmitting(true);
 
-    setTimeout(() => {
-      router.push("/dashboard");
-    }, 500);
+    // Build query params for claim page
+    const params = new URLSearchParams({
+      companyName: companyName.trim(),
+      country: country,
+    });
+
+    // Add keywords if provided
+    if (keywords.trim()) {
+      params.set("keywords", keywords.trim());
+    }
+
+    router.push(`/claim?${params.toString()}`);
   };
 
   return (
@@ -123,26 +131,23 @@ export function SearchScreen() {
       </header>
 
       <div className="flex flex-col gap-6 flex-1 relative z-10">
-        {/* Company Name Field - Mejorado */}
+        {/* Company Name Field - Con Autocompletado */}
         <div className="flex flex-col gap-2">
           <Label className="text-sm text-gray-300 font-medium">
             Nombre de la compañía
           </Label>
-          <div className="relative">
-            <Input
-              value={companyName}
-              onChange={(e) => setCompanyName(e.target.value)}
-              placeholder="Ej: Mi Empresa S.A.C."
-              aria-label="Nombre de la compañía"
-              className="h-14 px-4 bg-white/6 border border-white/20 rounded-2xl text-base text-white placeholder:text-gray-400 focus:outline-none focus:ring-4 focus:ring-cyan-500/30 focus:border-cyan-300 transition-transform duration-150 hover:scale-[1.01]"
-            />
-            {/* no visual icon indicator */}
-          </div>
+          <SearchCommand
+            value={companyName}
+            onChange={setCompanyName}
+            onCompanySelect={(company) => {
+              setCompanyName(company.name);
+            }}
+          />
           {errors.companyName && (
             <p className="text-xs text-red-400">{errors.companyName}</p>
           )}
           <p className="text-xs text-slate-400 mt-1">
-            Asegúrate de ingresar el nombre completo para mejores resultados.
+            Escribe para buscar o selecciona de la lista de empresas conocidas.
           </p>
         </div>
 
