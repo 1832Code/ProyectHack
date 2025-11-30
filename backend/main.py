@@ -6,9 +6,55 @@ import mysql.connector
 from mysql.connector import Error
 from openai import OpenAI
 from decouple import config
+from dotenv import load_dotenv
+import psycopg2
+from supabase import create_client, Client
+from functools import wraps
+
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
+
+# ==================== CONFIGURACIÓN SUPABASE ====================
+supabase: Client = create_client(
+    os.getenv('SUPABASE_URL'),
+    os.getenv('SUPABASE_KEY')
+)
+
+# Fetch variables
+USER = os.getenv("user")
+PASSWORD = os.getenv("password")
+HOST = os.getenv("host")
+PORT = os.getenv("port")
+DBNAME = os.getenv("dbname")
+
+# Connect to the database
+try:
+    connection = psycopg2.connect(
+        user=USER,
+        password=PASSWORD,
+        host=HOST,
+        port=PORT,
+        dbname=DBNAME
+    )
+    print("Connection successful!")
+    
+    # Create a cursor to execute SQL queries
+    cursor = connection.cursor()
+    
+    # Example query
+    cursor.execute("SELECT NOW();")
+    result = cursor.fetchone()
+    print("Current Time:", result)
+
+    # Close the cursor and connection
+    cursor.close()
+    connection.close()
+    print("Connection closed.")
+
+except Exception as e:
+    print(f"Failed to connect:{e}")
 
 
 # ==================== CONFIGURACIÓN ====================
@@ -17,6 +63,20 @@ client = OpenAI(
     api_key=DEEPSEEK_API_KEY,
     base_url="https://api.deepseek.com"
 )
+
+# ==================== SUPABASE CONFIGURATION ====================
+# Configuración para conexión con Supabase
+# Las credenciales deben estar en el archivo .env
+# Descomenta y configura cuando tengas las credenciales listas
+SUPABASE_URL = os.getenv('SUPABASE_URL', config('SUPABASE_URL', default=''))
+SUPABASE_KEY = os.getenv('SUPABASE_ANON_KEY', config('SUPABASE_ANON_KEY', default=''))
+supabase: Client = None
+if SUPABASE_URL and SUPABASE_KEY:
+    try:
+        supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+        print("Cliente Supabase inicializado correctamente")
+    except Exception as e:
+        print(f"Error inicializando Supabase: {e}")
 
 # Configuración de Base de Datos
 DB_CONFIG = {
@@ -34,6 +94,34 @@ def get_db_connection():
     except Error as e:
         print(f"Error conectando a BD: {e}")
         return None
+
+# ==================== MIDDLEWARE DE AUTENTICACIÓN ====================
+def require_auth(f):
+    """Decorador para proteger rutas que requieren autenticación"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        auth_header = request.headers.get('Authorization')
+        
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return jsonify({'error': 'Token no proporcionado'}), 401
+        
+        token = auth_header.split(' ')[1]
+        
+        try:
+            user = supabase.auth.get_user(token)
+            
+            if not user:
+                return jsonify({'error': 'Token inválido'}), 401
+            
+            request.user = user.user
+            
+        except Exception as e:
+            print(f"Error verificando token: {e}")
+            return jsonify({'error': 'Token inválido o expirado'}), 401
+        
+        return f(*args, **kwargs)
+    
+    return decorated_function
 
 # ==================== FUNCIONES DE IA ====================
 def analyze_keywords_with_ai(keyword_input):
@@ -356,15 +444,108 @@ def home():
         'message': 'API de búsqueda empresarial'
     })
 
-@app.route('/search', methods=['POST'])
-def search():
-    """
-    Endpoint principal de búsqueda
-    Recibe: name, country, sector, keyword
-    Retorna: resultados procesados
-    """
+# ==================== ENDPOINTS DE AUTENTICACIÓN ====================
+@app.route('/auth/callback', methods=['POST'])
+def auth_callback():
+    """Recibe el token después del login y sincroniza con la BD"""
     try:
         data = request.get_json()
+        access_token = data.get('access_token')
+        
+        if not access_token:
+            return jsonify({'error': 'Token no proporcionado'}), 400
+        
+        user = supabase.auth.get_user(access_token)
+        
+        if not user:
+            return jsonify({'error': 'Usuario no encontrado'}), 404
+        
+        user_data = user.user
+        
+        # Verificar si el perfil existe
+        profile = supabase.table('user_profiles')\
+            .select('*')\
+            .eq('id', user_data.id)\
+            .execute()
+        
+        if not profile.data:
+            # Crear perfil si no existe
+            profile_data = {
+                'id': user_data.id,
+                'full_name': user_data.user_metadata.get('full_name', ''),
+                'company_id': None
+            }
+            supabase.table('user_profiles').insert(profile_data).execute()
+        
+        return jsonify({
+            'success': True,
+            'user': {
+                'id': user_data.id,
+                'email': user_data.email,
+                'full_name': user_data.user_metadata.get('full_name', '')
+            }
+        }), 200
+        
+    except Exception as e:
+        print(f"Error en callback: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/auth/user', methods=['GET'])
+@require_auth
+def get_current_user():
+    """Obtiene los datos del usuario actual"""
+    try:
+        user_id = request.user.id
+        
+        profile = supabase.table('user_profiles')\
+            .select('*, companies(id, name, created_at)')\
+            .eq('id', user_id)\
+            .single()\
+            .execute()
+        
+        return jsonify({
+            'success': True,
+            'user': profile.data
+        }), 200
+        
+    except Exception as e:
+        print(f"Error obteniendo usuario: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/auth/logout', methods=['POST'])
+@require_auth
+def logout():
+    """Cierra sesión del usuario"""
+    try:
+        supabase.auth.sign_out()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Sesión cerrada correctamente'
+        }), 200
+        
+    except Exception as e:
+        print(f"Error en logout: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/auth/verify', methods=['GET'])
+@require_auth
+def verify_token():
+    """Verifica si el token es válido"""
+    return jsonify({
+        'success': True,
+        'user_id': request.user.id,
+        'email': request.user.email
+    }), 200
+
+@app.route('/search', methods=['POST'])
+@require_auth
+def search():
+    try:
+        data = request.get_json()
+        
+        # Obtener ID del usuario autenticado
+        user_id = request.user.id
         
         # Validar campos requeridos
         required_fields = ['name', 'country', 'sector', 'keyword']
@@ -398,10 +579,31 @@ def search():
             'sector': sector,
             'keyword_analysis': keyword_results,
             'final_analysis': final_results,
-            'timestamp': None  # Se puede agregar timestamp
+            'timestamp': None
         }
         
-        # Guardar en historial
+        #Crear la empresa en Supabase
+        company_data = {
+            'name': company_name,
+            'country': country,
+            'sector': sector,
+            'keywords': {
+                'original': keyword_input,
+                'processed': [kr['keyword'] for kr in keyword_results]
+            },
+            'search_results': response
+        }
+        
+        company_result = supabase.table('companies').insert(company_data).execute()
+        company_id = company_result.data[0]['id']
+        
+        # Actualizar el perfil del usuario con esta empresa
+        supabase.table('user_profiles')\
+            .update({'company_id': company_id})\
+            .eq('id', user_id)\
+            .execute()
+        
+        #Guardar en historial
         save_search_history(
             company_name, 
             country, 
@@ -410,7 +612,11 @@ def search():
             response
         )
         
-        return jsonify(response), 200
+        return jsonify({
+            'success': True,
+            'company_id': company_id,
+            'data': response
+        }), 200
         
     except Exception as e:
         print(f"Error en endpoint /search: {e}")

@@ -552,7 +552,7 @@ _agent_cache_dir = Path("/tmp/agent_cache")  # Cache for agent responses
 _apify_cache_dir = Path("/tmp/apify_cache")  # Cache for Apify results
 _cache_max_size = 10  # Increased cache size
 #cada 5 minutos
-_cache_ttl_hours = 5/60
+_cache_ttl_hours = 30/60
 
 # Initialize cache directories at module load
 for cache_dir in [_agent_cache_dir, _apify_cache_dir]:

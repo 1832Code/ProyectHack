@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "./claim-loading.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -65,10 +66,8 @@
 }
 
 @theme inline {
-  --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui,
-    sans-serif;
-  --font-serif: var(--font-source-serif), "New York", "Georgia", serif;
-  --font-mono: "SF Mono", "JetBrains Mono", "Fira Code", monospace;
+  --font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), "SF Mono", "JetBrains Mono", "Fira Code", monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
