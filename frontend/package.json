@@ -5,8 +5,8 @@
   "private": true,
   "homepage": "https://proyecthacks.onrender.com",
   "engines": {
-    "node": ">=18.17.0",
-    "npm": ">=9.0.0"
+    "node": ">=20.9.0",
+    "npm": ">=10.0.0"
   },
   "scripts": {
     "build": "next build",
@@ -15,7 +15,7 @@
     "start": "next start",
     "test": "jest",
     "test:watch": "jest --watch",
-    "postinstall": "next telemetry disable"
+    "postinstall": "echo 'Build complete'"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
