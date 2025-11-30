@@ -141,11 +141,19 @@ def get_business_opportunity(query: str, id_company: int = 1, limit: int = 100) 
         
         llm = _get_deepseek_llm()
         if not llm:
-            logger.error("❌ DeepSeek LLM not available")
+            error_msg = "DeepSeek LLM not available"
+            if not LANGCHAIN_AVAILABLE:
+                error_msg = "DeepSeek LLM not available: langchain-deepseek package not installed"
+            elif not os.getenv("DEEPSEEK_API"):
+                error_msg = "DeepSeek LLM not available: DEEPSEEK_API environment variable not set"
+            else:
+                error_msg = "DeepSeek LLM not available: failed to initialize"
+            
+            logger.error(f"❌ {error_msg}")
             return {
                 "query": query_clean,
                 "results": [],
-                "error": "DeepSeek LLM not available"
+                "error": error_msg
             }
         
         posts_json = json.dumps(posts_array, ensure_ascii=False, indent=2)
