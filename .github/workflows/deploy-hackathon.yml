@@ -404,8 +404,8 @@ jobs:
           echo "✅ Instagram Search API deployed at: $SERVICE_URL"
           echo "::set-output name=url::$SERVICE_URL"
 
-  deploy-tiktok-search:
-    name: Deploy TikTok Search API
+  deploy-global-search:
+    name: Deploy Global Search API
     runs-on: ubuntu-latest
     
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
@@ -453,7 +453,7 @@ jobs:
           gcloud services enable cloudbuild.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
           gcloud services enable artifactregistry.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }} || true
 
-      - name: Deploy TikTok Search Service
+      - name: Deploy Global Search Service
         working-directory: ./hackathon
         env:
           APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
@@ -461,7 +461,7 @@ jobs:
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
           DEBUG: ${{ secrets.DEBUG }}
         run: |
-          echo "Deploying TikTok Search API to Cloud Run..."
+          echo "Deploying Global Search API (api_global_search.py) to Cloud Run..."
           
           cp Dockerfile.tiktok Dockerfile
           
@@ -489,17 +489,17 @@ jobs:
           echo "Forcing rebuild by adding timestamp to Dockerfile..."
           echo "# Build timestamp: $(date +%s)" >> Dockerfile
           
-          SERVICE_EXISTS=$(gcloud run services list --project="${{ env.GCP_PROJECT_ID }}" --region="${{ env.GCP_REGION }}" --filter="metadata.name=tiktok-search-api" --format="value(metadata.name)" || echo "")
+          SERVICE_EXISTS=$(gcloud run services list --project="${{ env.GCP_PROJECT_ID }}" --region="${{ env.GCP_REGION }}" --filter="metadata.name=global-search-api" --format="value(metadata.name)" || echo "")
           
           DEPLOY_FLAGS=""
           if [ -n "$SERVICE_EXISTS" ]; then
-            echo "Service 'tiktok-search-api' already exists. Deploying with --no-traffic."
+            echo "Service 'global-search-api' already exists. Deploying with --no-traffic."
             DEPLOY_FLAGS="--no-traffic"
           else
-            echo "Service 'tiktok-search-api' does not exist. Creating new service."
+            echo "Service 'global-search-api' does not exist. Creating new service."
           fi
           
-          if ! gcloud run deploy tiktok-search-api \
+          if ! gcloud run deploy global-search-api \
             --source . \
             --region "${{ env.GCP_REGION }}" \
             --platform managed \
@@ -534,7 +534,7 @@ jobs:
             
             echo ""
             echo "=== Cloud Run Service Status ==="
-            gcloud run services describe tiktok-search-api \
+            gcloud run services describe global-search-api \
               --region "${{ env.GCP_REGION }}" \
               --project "${{ env.GCP_PROJECT_ID }}" \
               --format="yaml" || echo "⚠️  Service may not exist yet"
@@ -545,14 +545,14 @@ jobs:
             echo "https://console.cloud.google.com/cloud-build/builds?project=${{ env.GCP_PROJECT_ID }}"
             echo ""
             echo "Cloud Run Logs:"
-            echo "https://console.cloud.google.com/logs/query?project=${{ env.GCP_PROJECT_ID }}&query=resource.type%3D%22cloud_run_revision%22%0Aresource.labels.service_name%3D%22tiktok-search-api%22"
+            echo "https://console.cloud.google.com/logs/query?project=${{ env.GCP_PROJECT_ID }}&query=resource.type%3D%22cloud_run_revision%22%0Aresource.labels.service_name%3D%22global-search-api%22"
             exit 1
           fi
           
           echo "✅ Deployment successful."
           if [ -n "$SERVICE_EXISTS" ]; then
             echo "Setting traffic to latest revision..."
-            gcloud run services update-traffic tiktok-search-api \
+            gcloud run services update-traffic global-search-api \
               --to-latest \
               --region "${{ env.GCP_REGION }}" \
               --project "${{ env.GCP_PROJECT_ID }}"
@@ -561,11 +561,11 @@ jobs:
 
       - name: Get service URL
         run: |
-          SERVICE_URL=$(gcloud run services describe tiktok-search-api \
+          SERVICE_URL=$(gcloud run services describe global-search-api \
             --region "${{ env.GCP_REGION }}" \
             --project "${{ env.GCP_PROJECT_ID }}" \
             --format 'value(status.url)')
-          echo "✅ TikTok Search API deployed at: $SERVICE_URL"
+          echo "✅ Global Search API deployed at: $SERVICE_URL"
           echo "::set-output name=url::$SERVICE_URL"
 
   validate:
