@@ -2,7 +2,7 @@
 Aquí es el back hecho en Flask
 
 # Instalation
-Instalan las dependencias usando:
+Instalan las dependencias:
 
 ```
 pip install -r requirements.txt
