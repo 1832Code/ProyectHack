@@ -39,6 +39,9 @@ def get_supabase_client() -> Client:
             if not supabase_key:
                 raise ValueError("SUPABASE_KEY environment variable is not set")
             
+            supabase_url = str(supabase_url).strip().replace("\n", "").replace("\r", "").replace("\t", "")
+            supabase_key = str(supabase_key).strip().replace("\n", "").replace("\r", "").replace("\t", "")
+            
             _supabase_client = create_client(supabase_url, supabase_key)
             logger.info("✅ Supabase client created successfully")
             

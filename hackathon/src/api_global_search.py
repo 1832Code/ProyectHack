@@ -295,18 +295,27 @@ async def get_local_posts(limit: int = 100, id_company: int = 1):
         Dict con status y lista de posts
     """
     try:
-        logger.info(f"Getting local posts (company: {id_company}, limit: {limit})")
+        logger.info(f"🔍 GET /post/local - company: {id_company}, limit: {limit}")
+        logger.info(f"SUPABASE_URL: {'✅ set' if os.getenv('SUPABASE_URL') else '❌ not set'}")
+        logger.info(f"SUPABASE_KEY: {'✅ set' if os.getenv('SUPABASE_KEY') else '❌ not set'}")
         
         posts = get_posts(id_company=id_company, limit=limit)
         
-        return {
+        logger.info(f"✅ Retrieved {len(posts)} posts from database")
+        
+        response = {
             "status": "success",
             "count": len(posts),
             "posts": posts
         }
         
+        logger.info(f"📤 Returning response with {len(posts)} posts")
+        return response
+        
     except Exception as e:
-        logger.error(f"Error getting local posts: {e}", exc_info=True)
+        logger.error(f"❌ Error getting local posts: {e}", exc_info=True)
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
 
 

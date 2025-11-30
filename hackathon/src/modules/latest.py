@@ -223,21 +223,34 @@ def get_posts(id_company: int = 1, limit: int = 100, order_by: str = "created_at
         List of post records as dictionaries
     """
     try:
+        logger.info(f"🔍 get_posts called: id_company={id_company}, limit={limit}, order_by={order_by}")
+        
         supabase = get_supabase_client()
+        logger.info("✅ Supabase client obtained")
         
         query = supabase.table("posts").select("*").eq("id_company", id_company)
+        logger.info(f"✅ Query built for id_company={id_company}")
         
         query = query.order(order_by, desc=True).limit(limit)
+        logger.info(f"✅ Query ordered by {order_by} desc, limit={limit}")
         
         response = query.execute()
+        logger.info(f"✅ Query executed, response received")
         
         results = response.data if response.data else []
         logger.info(f"✅ Retrieved {len(results)} posts from database")
+        
+        if len(results) == 0:
+            logger.warning(f"⚠️  No posts found for id_company={id_company}")
+        else:
+            logger.info(f"📊 First post ID: {results[0].get('id') if results else 'N/A'}")
         
         return results
         
     except Exception as e:
         logger.error(f"❌ Error getting posts: {e}", exc_info=True)
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
         return []
 
 
