@@ -28,7 +28,9 @@ const sentimentIcons = {
   neutral: Minus,
 };
 
-function getSentimentType(sentiment: number): "positive" | "negative" | "neutral" {
+function getSentimentType(
+  sentiment: number
+): "positive" | "negative" | "neutral" {
   if (sentiment > 0.3) return "positive";
   if (sentiment < -0.3) return "negative";
   return "neutral";
@@ -109,7 +111,12 @@ export function Mentions() {
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMore && !isLoadingMore && !isProviderLoading) {
+        if (
+          entries[0].isIntersecting &&
+          hasMore &&
+          !isLoadingMore &&
+          !isProviderLoading
+        ) {
           loadMore();
         }
       },
@@ -205,9 +212,11 @@ export function Mentions() {
                   )}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2 mb-2">
-                      <span className="text-sm font-semibold text-slate-800 truncate">
-                        {post.title || "Sin título"}
-                      </span>
+                      {post.title && (
+                        <span className="text-sm font-semibold text-slate-800 truncate">
+                          {post.title}
+                        </span>
+                      )}
                       <span className="text-xs text-slate-500 shrink-0">
                         {formatTimeAgo(post.created_at)}
                       </span>

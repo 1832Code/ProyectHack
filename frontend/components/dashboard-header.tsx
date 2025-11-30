@@ -45,21 +45,23 @@ export function DashboardHeader({
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // useEffect(() => {
-  //   fetchCompanyPosts({
-  //     query: companyName ?? "",
-  //     maxItems: 10,
-  //     platforms: ["tiktok"],
-  //   });
+  useEffect(() => {
+    fetchCompanyPosts({
+      query: companyName ?? "",
+      maxItems: 10,
+      platforms: ["tiktok"],
+      showLoading: false,
+    });
 
-  //   setTimeout(() => {
-  //     fetchCompanyPosts({
-  //       query: companyName ?? "",
-  //       maxItems: 10,
-  //       platforms: ["x"],
-  //     });
-  //   }, 2000);
-  // }, [analytics]);
+    setTimeout(() => {
+      fetchCompanyPosts({
+        query: companyName ?? "",
+        maxItems: 10,
+        platforms: ["x"],
+        showLoading: false,
+      });
+    }, 2000);
+  }, []);
 
   return (
     <div

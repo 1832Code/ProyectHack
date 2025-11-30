@@ -152,8 +152,11 @@ export function ServicesProvider({ children }: ServicesProviderProps) {
     query,
     maxItems,
     platforms,
+    showLoading = true,
   }: FetchCompanyPostsParams) => {
-    setIsLoading(true);
+    if (showLoading) {
+      setIsLoading(true);
+    }
     console.log("🚀 Starting test request to fetchCompanyPosts...", query);
 
     try {
@@ -172,7 +175,7 @@ export function ServicesProvider({ children }: ServicesProviderProps) {
       fetchOpportunity({
         query,
         idCompany: 1,
-        limit: 100,
+        limit: 1000,
       });
 
       console.log("✅ Test request successful!");

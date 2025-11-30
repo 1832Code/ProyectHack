@@ -118,6 +118,7 @@ export interface FetchCompanyPostsParams {
   useCache?: boolean;
   forceRefresh?: boolean;
   processPosts?: boolean;
+  showLoading?: boolean;
 }
 
 export async function fetchCompanyPosts(
