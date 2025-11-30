@@ -41,9 +41,16 @@ def _get_deepseek_llm():
             logger.warning("⚠️  LangChain not available")
             return None
         
-        api_key = os.getenv("DEEPSEEK_API")
+        try:
+            from dotenv import load_dotenv
+            load_dotenv()
+        except ImportError:
+            pass
+        
+        api_key = os.getenv("DEEPSEEK_API") or os.getenv("DEEPSEEK_API_KEY")
         if not api_key:
-            logger.warning("⚠️  DEEPSEEK_API not set")
+            logger.warning("⚠️  DEEPSEEK_API or DEEPSEEK_API_KEY not set")
+            logger.debug(f"Available env vars with 'DEEPSEEK': {[k for k in os.environ.keys() if 'DEEPSEEK' in k.upper()]}")
             return None
         
         try:
@@ -139,17 +146,24 @@ def get_business_opportunity(query: str, id_company: int = 1, limit: int = 100) 
                 "error": "No valid posts found"
             }
         
+        try:
+            from dotenv import load_dotenv
+            load_dotenv()
+        except ImportError:
+            pass
+        
         llm = _get_deepseek_llm()
         if not llm:
             error_msg = "DeepSeek LLM not available"
             if not LANGCHAIN_AVAILABLE:
                 error_msg = "DeepSeek LLM not available: langchain-deepseek package not installed"
-            elif not os.getenv("DEEPSEEK_API"):
-                error_msg = "DeepSeek LLM not available: DEEPSEEK_API environment variable not set"
+            elif not (os.getenv("DEEPSEEK_API") or os.getenv("DEEPSEEK_API_KEY")):
+                error_msg = "DeepSeek LLM not available: DEEPSEEK_API or DEEPSEEK_API_KEY environment variable not set"
             else:
                 error_msg = "DeepSeek LLM not available: failed to initialize"
             
             logger.error(f"❌ {error_msg}")
+            logger.debug(f"Environment check - DEEPSEEK_API: {bool(os.getenv('DEEPSEEK_API'))}, DEEPSEEK_API_KEY: {bool(os.getenv('DEEPSEEK_API_KEY'))}")
             return {
                 "query": query_clean,
                 "results": [],
