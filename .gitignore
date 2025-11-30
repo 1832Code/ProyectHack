@@ -8,3 +8,4 @@ frontend/.next
 frontend/out
 frontend/.env.local
 .DS_Store
+node_modules
