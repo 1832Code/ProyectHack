@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Lightbulb, ChevronDown, ChevronUp } from "lucide-react";
+import { Lightbulb, ChevronDown, ChevronUp, Globe, Instagram, Twitter, Music2 } from "lucide-react";
 import type { OpportunityResult } from "@/types/opportunity";
 
 interface OpportunityCardProps {
@@ -63,7 +63,7 @@ export function OpportunityCard({ result }: OpportunityCardProps) {
           {expanded && (
             <div className="space-y-3 pt-2">
               {result.posts.map((post) => (
-                <PostCard key={post.id} title={post.title ||post.description} />
+                <PostCard key={post.id} title={post.title || post.description} />
               ))}
             </div>
           )}
@@ -73,10 +73,23 @@ export function OpportunityCard({ result }: OpportunityCardProps) {
   );
 }
 
+const socialIcons = [
+  { icon: Globe, color: "text-blue-500" },
+  { icon: Instagram, color: "text-pink-500" },
+  { icon: Twitter, color: "text-sky-500" },
+  { icon: Music2, color: "text-emerald-500" },
+];
+
 function PostCard({ title }: { title: string }) {
+  const randomIndex = Math.floor(Math.random() * socialIcons.length);
+  const { icon: Icon, color: iconColor } = socialIcons[randomIndex];
+
   return (
     <div className="rounded-lg border border-border bg-secondary/20 p-3 space-y-2">
       <div className="flex items-start gap-3">
+        <div className={`shrink-0 ${iconColor}`}>
+          <Icon className="h-4 w-4" />
+        </div>
         <div className="flex-1 min-w-0">
           {title && <p className="text-sm font-medium truncate text-foreground">{title}</p>}
         </div>
