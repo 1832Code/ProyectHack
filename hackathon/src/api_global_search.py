@@ -22,11 +22,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-from modules.tiktok_search import search_tiktok
-from modules.google_search import search_google
-from modules.instagram_search import search_instagram_term, search_instagram_hashtag, search_instagram_profile
-from modules.capture import capture_all
-from modules.latest import process_latest_metas, get_posts
+from src.modules.tiktok_search import search_tiktok
+from src.modules.google_search import search_google
+from src.modules.instagram_search import search_instagram_term, search_instagram_hashtag, search_instagram_profile
+from src.modules.capture import capture_all
+from src.modules.latest import process_latest_metas, get_posts
 
 app = FastAPI(
     title="Global Search API",

@@ -6,9 +6,11 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY src/ ./src/
+COPY src/modules ./modules/
 
 RUN echo "=== Verifying source structure ===" && \
     ls -la /app/src/ && \
+    ls -la /app/modules/ && \
     echo "=== Verifying api_global_search.py exists ===" && \
     test -f /app/src/api_global_search.py && echo "✅ api_global_search.py found" || (echo "❌ api_global_search.py NOT FOUND" && exit 1) && \
     echo "=== Checking get_client function ===" && \

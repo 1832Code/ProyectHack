@@ -13,10 +13,10 @@ try:
 except ImportError:
     pass
 
-from modules.supabase_connection import get_supabase_client
-from modules.tiktok_search import search_tiktok
-from modules.google_search import search_google
-from modules.instagram_search import search_instagram_term
+from src.modules.supabase_connection import get_supabase_client
+from src.modules.tiktok_search import search_tiktok
+from src.modules.google_search import search_google
+from src.modules.instagram_search import search_instagram_term
 from apify_client import ApifyClient
 
 logging.basicConfig(

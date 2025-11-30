@@ -6,8 +6,8 @@ Author: Mauricio J. @synaw_w
 import logging
 from typing import List, Optional, Dict, Any
 
-from modules.capture import get_meta
-from modules.supabase_connection import get_supabase_client
+from src.modules.capture import get_meta
+from src.modules.supabase_connection import get_supabase_client
 
 logging.basicConfig(
     level=logging.INFO,
