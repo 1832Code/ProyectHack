@@ -22,45 +22,196 @@ ProyectHack/
 │   └── ...
 │
 ├── frontend/            # Frontend Next.js (Puerto 3000)
-│   ├── package.json
-│   ├── start.ps1        # Script de inicio rápido
-│   └── ...
+│   ├── app/             # App Router (páginas y API routes)
+│   ├── components/      # Componentes React reutilizables
+│   ├── lib/             # Utilidades y configuración
+│   ├── types/           # Definiciones TypeScript
+│   ├── package.json     # Dependencias y scripts
+│   └── start.sh         # Script de inicio
 │
 └── INSTRUCCIONES_EJECUCION.md  # Guía completa
 ```
 
-## ✅ Estado de Instalación
+---
 
-**¡Todas las dependencias han sido instaladas correctamente!**
+## 🖥️ Frontend (Next.js) - Guía Completa
 
-### Backend (Flask)
-- ✓ Flask 3.1.2
-- ✓ flask-cors 6.0.1
-- ✓ mysql-connector-python 9.5.0
-- ✓ openai 2.8.1
-- ✓ python-dotenv 1.2.1
-- ✓ python-decouple 3.8
+### Requisitos Previos
 
-### Hackathon (FastAPI)
-- ✓ apify-client
-- ✓ fastapi
-- ✓ uvicorn
-- ✓ pydantic
+- **Node.js** >= 20.9.0
+- **npm** >= 10.0.0 (o pnpm/bun como alternativa)
 
-### Frontend (Next.js)
-- ✓ 185 paquetes instalados
-- ✓ Next.js 16.0.3
-- ✓ React 19.2.0
+Verifica tu versión de Node.js:
+```bash
+node --version  # Debe ser v20.9.0 o superior
+npm --version   # Debe ser v10.0.0 o superior
+```
 
-## 🔧 Configuración Inicial
+### Tecnologías Principales
 
-### 1. Configurar Variables de Entorno
+| Tecnología | Versión | Descripción |
+|------------|---------|-------------|
+| Next.js | 16.0.3 | Framework React con App Router |
+| React | 19.2.0 | Librería UI |
+| TypeScript | 5.x | Tipado estático |
+| Tailwind CSS | 4.x | Framework de estilos |
+| NextAuth.js | 4.24.13 | Autenticación (Google OAuth) |
+| Supabase | 2.86.0 | Base de datos y backend |
+| Radix UI | - | Componentes accesibles |
+| Motion | 12.x | Animaciones |
+
+### Instalación del Frontend
+
+1. **Navegar a la carpeta frontend:**
+```bash
+cd frontend
+```
+
+2. **Instalar dependencias:**
+
+Con npm:
+```bash
+npm install
+```
+
+Con pnpm (alternativa):
+```bash
+pnpm install
+```
+
+Con bun (alternativa):
+```bash
+bun install
+```
+
+### Configuración de Variables de Entorno
+
+Crea el archivo `.env.local` en la carpeta `frontend/`:
+
+```bash
+# En macOS/Linux
+cp .env.example .env.local
+
+# En Windows
+copy .env.example .env.local
+```
+
+Configura las siguientes variables de entorno:
+
+```env
+# NextAuth Configuration
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=tu-secret-aleatorio-seguro
+
+# Google OAuth (obtener en Google Cloud Console)
+GOOGLE_CLIENT_ID=tu-google-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=tu-google-client-secret
+
+# Supabase (obtener en tu proyecto de Supabase)
+SUPABASE_URL=https://tu-proyecto.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=tu-service-role-key
+SUPABASE_ANON_KEY=tu-anon-key
+```
+
+> 💡 **Tip:** Para generar un `NEXTAUTH_SECRET` seguro, ejecuta:
+> ```bash
+> openssl rand -base64 32
+> ```
+
+### Ejecutar el Frontend
+
+#### Modo Desarrollo (con hot-reload)
+
+```bash
+npm run dev
+```
+
+El servidor estará disponible en: **http://localhost:3000**
+
+Para usar un puerto diferente:
+```bash
+npm run dev -- -p 3001
+```
+
+#### Modo Producción
+
+1. **Crear build de producción:**
+```bash
+npm run build
+```
+
+2. **Iniciar servidor de producción:**
+```bash
+npm start
+```
+
+O usar el script incluido:
+```bash
+./start.sh
+```
+
+### Scripts Disponibles
+
+| Script | Comando | Descripción |
+|--------|---------|-------------|
+| dev | `npm run dev` | Servidor de desarrollo con hot-reload |
+| build | `npm run build` | Crear build optimizado para producción |
+| start | `npm start` | Iniciar servidor de producción |
+| lint | `npm run lint` | Ejecutar ESLint |
+| test | `npm test` | Ejecutar tests con Jest |
+| test:watch | `npm run test:watch` | Tests en modo watch |
+
+### Estructura de Carpetas del Frontend
+
+```
+frontend/
+├── app/                    # App Router de Next.js
+│   ├── api/               # API Routes
+│   │   ├── analytics/     # Endpoint de analytics
+│   │   ├── auth/          # NextAuth endpoints
+│   │   ├── opportunity/   # Endpoint de oportunidades
+│   │   ├── posts/         # Endpoint de posts
+│   │   └── user-actions/  # Acciones de usuario
+│   ├── buscar/            # Página de búsqueda
+│   ├── claim/             # Página de claim
+│   ├── dashboard/         # Dashboard principal
+│   ├── signin/            # Página de login
+│   ├── layout.tsx         # Layout principal
+│   ├── page.tsx           # Página de inicio
+│   └── globals.css        # Estilos globales
+│
+├── components/            # Componentes React
+│   ├── ui/               # Componentes UI base (shadcn/ui)
+│   ├── dashboard/        # Componentes del dashboard
+│   └── providers/        # Providers de contexto
+│
+├── lib/                   # Utilidades
+│   ├── api.ts            # Cliente API
+│   ├── auth.ts           # Configuración NextAuth
+│   ├── supabase-server.ts # Cliente Supabase
+│   └── utils.ts          # Funciones utilitarias
+│
+├── types/                 # Definiciones TypeScript
+│   ├── analytics.ts
+│   ├── company-lookup.ts
+│   ├── company-posts.ts
+│   └── opportunity.ts
+│
+└── public/               # Archivos estáticos
+    └── logo.png
+```
+
+---
+
+## ⚙️ Backend (Flask) - Configuración
+
+### Configurar Variables de Entorno
 
 Crea el archivo `.env` en la carpeta `backend/`:
 
 ```bash
 cd backend
-copy .env.example .env
+cp .env.example .env
 ```
 
 Edita el archivo `.env` y completa tus credenciales:
@@ -69,7 +220,7 @@ Edita el archivo `.env` y completa tus credenciales:
 DEEPSEEK_API_KEY=tu_clave_api_aqui
 ```
 
-### 2. Configurar Base de Datos
+### Configurar Base de Datos
 
 1. Asegúrate de tener MySQL instalado y corriendo
 2. Ejecuta el script de configuración:
@@ -91,20 +242,32 @@ DB_CONFIG = {
 }
 ```
 
-## 🚀 Inicio Rápido
+---
 
-### Opción 1: Scripts PowerShell (Recomendado para Windows)
+## 🚀 Inicio Rápido - Todos los Servicios
 
-**Backend:**
-```powershell
+### Opción 1: Scripts de Inicio
+
+**Backend Flask:**
+```bash
 cd backend
+# Windows
 .\start.ps1
+
+# macOS/Linux
+python main.py
 ```
 
-**Frontend:**
-```powershell
+**Frontend Next.js:**
+```bash
 cd frontend
-.\start.ps1
+npm run dev
+```
+
+**Hackathon FastAPI (Opcional):**
+```bash
+cd hackathon
+uvicorn main:app --reload
 ```
 
 ### Opción 2: Comandos Manuales
@@ -146,50 +309,15 @@ Servidor en: http://localhost:8000
   ```
 - `GET /results` - Obtener resultados
 
-## 🛠️ Tecnologías Utilizadas
+### Frontend API Routes (Puerto 3000)
 
-### Backend
-- **Flask** 3.1.2 - Framework web
-- **OpenAI** 2.8.1 - Integración con DeepSeek AI
-- **MySQL Connector** 9.5.0 - Base de datos
-- **Flask-CORS** 6.0.1 - CORS support
-- **Python-Decouple** 3.8 - Gestión de configuración
+- `GET /api/analytics` - Obtener analytics
+- `GET /api/opportunity` - Obtener oportunidades
+- `GET /api/posts` - Obtener posts de empresas
+- `POST /api/user-actions` - Acciones de usuario
+- `GET/POST /api/auth/*` - Autenticación NextAuth
 
-### Frontend
-- **Next.js** 16.0.3 - Framework React
-- **React** 19.2.0 - Librería UI
-- **Radix UI** - Componentes accesibles
-- **Tailwind CSS** 4.1.9 - Estilos
-- **TypeScript** 5 - Tipado estático
-
-## 📦 Comandos Útiles
-
-### Backend
-```bash
-# Instalar dependencias
-pip install -r requirements.txt
-
-# Verificar instalación
-python -c "import flask, flask_cors, mysql.connector, openai, decouple; print('✓ OK')"
-
-# Ejecutar servidor
-python main.py
-```
-
-### Frontend
-```bash
-# Instalar dependencias
-npm install
-
-# Modo desarrollo
-npm run dev
-
-# Build producción
-npm run build
-
-# Iniciar producción
-npm start
-```
+---
 
 ## 🔍 Verificación de Instalación
 
@@ -199,8 +327,11 @@ Ejecuta estos comandos para verificar que todo esté instalado:
 # Verificar Python
 python --version
 
-# Verificar Node.js
+# Verificar Node.js (debe ser >= 20.9.0)
 node --version
+
+# Verificar npm (debe ser >= 10.0.0)
+npm --version
 
 # Verificar dependencias backend
 cd backend
@@ -211,28 +342,73 @@ cd frontend
 npm list --depth=0
 ```
 
+---
+
 ## ⚠️ Solución de Problemas
 
-### Error: No se puede conectar a MySQL
+### Frontend
+
+#### Error: Node.js version incompatible
+```bash
+# El proyecto requiere Node.js >= 20.9.0
+# Actualiza Node.js desde https://nodejs.org o usa nvm:
+nvm install 20
+nvm use 20
+```
+
+#### Error: Módulos no encontrados
+```bash
+# Limpia la caché e instala de nuevo
+rm -rf node_modules
+rm package-lock.json
+npm install
+```
+
+#### Error: NEXTAUTH_SECRET no configurado
+- Crea el archivo `.env.local` en `frontend/`
+- Genera un secret seguro: `openssl rand -base64 32`
+
+#### Error: Google OAuth no funciona
+- Verifica `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET` en `.env.local`
+- Asegúrate de que `http://localhost:3000` esté en los URIs autorizados de Google Cloud Console
+
+#### Error: Supabase connection failed
+- Verifica `SUPABASE_URL` y las keys en `.env.local`
+- Asegúrate de que el proyecto Supabase esté activo
+
+#### Error: Puerto 3000 en uso
+```bash
+# Usar un puerto diferente
+npm run dev -- -p 3001
+```
+
+### Backend
+
+#### Error: No se puede conectar a MySQL
 - Verifica que MySQL esté corriendo
 - Verifica las credenciales en `DB_CONFIG`
 - Ejecuta el script `setup_database.sql`
 
-### Error: DEEPSEEK_API_KEY no encontrada
+#### Error: DEEPSEEK_API_KEY no encontrada
 - Verifica que el archivo `.env` exista en `backend/`
 - Verifica que la variable esté correctamente configurada
 
-### Error: Puerto en uso
-- Cambia el puerto en el código o cierra la aplicación que lo está usando
-- Backend Flask: Línea 428 en `main.py`
-- Frontend: Usa `npm run dev -- -p 3001` para otro puerto
+#### Error: Puerto 5000 en uso
+- Cambia el puerto en la línea 428 de `main.py`
+
+---
 
 ## 📝 Notas Importantes
 
-1. **Entorno Virtual**: El proyecto incluye un entorno virtual en `.venv`
-2. **Variables de Entorno**: Nunca subas el archivo `.env` a Git
-3. **Base de Datos**: Asegúrate de crear las tablas antes de ejecutar
-4. **API Keys**: Obtén tu clave de DeepSeek en https://platform.deepseek.com/
+1. **Node.js**: El frontend requiere Node.js >= 20.9.0
+2. **Variables de Entorno**: Nunca subas `.env` o `.env.local` a Git
+3. **Base de Datos**: Configura Supabase para el frontend y MySQL para el backend
+4. **API Keys**: 
+   - DeepSeek: https://platform.deepseek.com/
+   - Google OAuth: https://console.cloud.google.com/
+   - Supabase: https://supabase.com/dashboard
+
+---
 
 ## 👥 Equipo
 
@@ -244,14 +420,24 @@ Este proyecto es parte de un hackathon educativo.
 
 ---
 
-## 🎯 Próximos Pasos
+## 🎯 Checklist de Configuración
 
-1. ✅ Instalar dependencias (COMPLETADO)
-2. ⚠️ Configurar archivo `.env`
-3. ⚠️ Configurar base de datos MySQL
-4. ⚠️ Ejecutar backend
-5. ⚠️ Ejecutar frontend
-6. ⚠️ Probar la aplicación
+### Frontend
+- [ ] Node.js >= 20.9.0 instalado
+- [ ] Dependencias instaladas (`npm install`)
+- [ ] Archivo `.env.local` creado
+- [ ] `NEXTAUTH_SECRET` configurado
+- [ ] Google OAuth configurado (opcional)
+- [ ] Supabase configurado
+- [ ] `npm run dev` ejecutándose en http://localhost:3000
+
+### Backend
+- [ ] Python instalado
+- [ ] Dependencias instaladas (`pip install -r requirements.txt`)
+- [ ] Archivo `.env` creado
+- [ ] `DEEPSEEK_API_KEY` configurado
+- [ ] MySQL configurado y corriendo
+- [ ] `python main.py` ejecutándose en http://localhost:5000
 
 ---
 

@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
-      next: { revalidate: 60 },
+      next: { revalidate: 60 * 10 },
     });
 
     if (!response.ok) {
