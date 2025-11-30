@@ -15,7 +15,8 @@ from src.modules.supabase_connection import get_supabase_client
 
 try:
     from dotenv import load_dotenv
-    load_dotenv()
+    env_path = Path(__file__).parent.parent.parent / ".env"
+    load_dotenv(env_path)
 except ImportError:
     pass
 
@@ -143,7 +144,8 @@ def get_business_opportunity(query: str, id_company: int = 1, limit: int = 100) 
         
         try:
             from dotenv import load_dotenv
-            load_dotenv()
+            env_path = Path(__file__).parent.parent.parent / ".env"
+            load_dotenv(env_path)
         except ImportError:
             pass
         
