@@ -104,13 +104,22 @@ def _process_tiktok_data(item: Dict[str, Any], processed: Dict[str, Any]) -> Dic
             processed["title"] = text[:500] if len(text) > 500 else text
             processed["description"] = text[:2000] if len(text) > 2000 else text
         
-        processed["video"] = item.get("webVideoUrl")
+        video_url = item.get("webVideoUrl")
+        if video_url:
+            processed["video"] = str(video_url).strip().replace("\n", "").replace("\r", "")
+        else:
+            processed["video"] = None
         
         author_meta = item.get("authorMeta", {})
         if isinstance(author_meta, dict):
-            processed["image"] = author_meta.get("avatar")
+            image_url = author_meta.get("avatar")
         else:
-            processed["image"] = item.get("authorMeta.avatar")
+            image_url = item.get("authorMeta.avatar")
+        
+        if image_url:
+            processed["image"] = str(image_url).strip().replace("\n", "").replace("\r", "")
+        else:
+            processed["image"] = None
         
         play_count = item.get("playCount", 0)
         digg_count = item.get("diggCount", 0)
@@ -141,8 +150,18 @@ def _process_instagram_data(item: Dict[str, Any], processed: Dict[str, Any]) -> 
     if isinstance(item, dict):
         processed["title"] = item.get("caption", "")[:500] if item.get("caption") else None
         processed["description"] = item.get("caption", "")[:2000] if item.get("caption") else None
-        processed["image"] = item.get("displayUrl") or item.get("url")
-        processed["video"] = item.get("videoUrl")
+        
+        image_url = item.get("displayUrl") or item.get("url")
+        if image_url:
+            processed["image"] = image_url.strip().replace("\n", "").replace("\r", "")
+        else:
+            processed["image"] = None
+        
+        video_url = item.get("videoUrl")
+        if video_url:
+            processed["video"] = video_url.strip().replace("\n", "").replace("\r", "")
+        else:
+            processed["video"] = None
         
         processed["insight1"] = float(item.get("likesCount", 0)) if item.get("likesCount") else None
         processed["insight2"] = float(item.get("commentsCount", 0)) if item.get("commentsCount") else None
@@ -177,10 +196,12 @@ def post_exists(title: str, video: Optional[str] = None, id_company: int = 1) ->
     try:
         supabase = get_supabase_client()
         
-        query = supabase.table("posts").select("id").eq("id_company", id_company).eq("title", title)
+        clean_title = title.strip().replace("\n", "").replace("\r", "") if title else ""
+        query = supabase.table("posts").select("id").eq("id_company", id_company).eq("title", clean_title)
         
         if video:
-            query = query.eq("video", video)
+            clean_video = video.strip().replace("\n", "").replace("\r", "")
+            query = query.eq("video", clean_video)
         
         response = query.limit(1).execute()
         
