@@ -17,7 +17,7 @@ export function OpportunityCard({ result }: OpportunityCardProps) {
   return (
     <Card className="border-l-4 border-l-primary">
       <CardHeader className="pb-3">
-        <CardTitle className="text-base font-medium leading-relaxed line-clamp-2">
+        <CardTitle className="text-base font-medium leading-relaxed">
           {result.insight}
         </CardTitle>
       </CardHeader>
