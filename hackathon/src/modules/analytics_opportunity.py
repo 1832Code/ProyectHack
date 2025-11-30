@@ -12,6 +12,7 @@ from pathlib import Path
 from datetime import datetime, timedelta
 from src.modules.supabase_connection import get_supabase_client
 
+
 try:
     from dotenv import load_dotenv
     load_dotenv()
@@ -53,14 +54,15 @@ def _get_deepseek_llm():
             logger.debug(f"Available env vars with 'DEEPSEEK': {[k for k in os.environ.keys() if 'DEEPSEEK' in k.upper()]}")
             return None
         
+        os.environ["DEEPSEEK_API_KEY"] = api_key
+        
         try:
             _deepseek_llm = ChatDeepSeek(
                 model="deepseek-chat",
                 temperature=0.7,
                 max_tokens=None,
                 timeout=None,
-                max_retries=2,
-                api_key=api_key
+                max_retries=2
             )
             logger.info("✅ DeepSeek LLM initialized")
         except Exception as e:
