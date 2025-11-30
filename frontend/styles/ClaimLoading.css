@@ -1,0 +1,161 @@
+.capybaraloader {
+  position: relative;
+  width: 120px;
+  height: 120px;
+}
+
+.capybara {
+  position: relative;
+  width: 80px;
+  height: 60px;
+  margin: 0 auto;
+  transform: scale(0.8);
+}
+
+.capyhead {
+  position: absolute;
+  width: 50px;
+  height: 40px;
+  background: #8b7355;
+  border-radius: 20px 20px 15px 15px;
+  top: 0;
+  left: 15px;
+  z-index: 2;
+}
+
+.capyear {
+  position: absolute;
+  width: 8px;
+  height: 12px;
+  background: #5d4037;
+  border-radius: 50%;
+  top: 8px;
+}
+
+.capyear:first-child {
+  left: 8px;
+}
+
+.capyear:last-child {
+  right: 8px;
+}
+
+.capyear2 {
+  position: absolute;
+  width: 4px;
+  height: 6px;
+  background: #5d4037;
+  border-radius: 50%;
+  top: 10px;
+  left: 2px;
+}
+
+.capymouth {
+  position: absolute;
+  width: 20px;
+  height: 8px;
+  bottom: 5px;
+  left: 15px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.capylips {
+  width: 8px;
+  height: 4px;
+  background: #5d4037;
+  border-radius: 2px;
+}
+
+.capyeye {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: #000;
+  border-radius: 50%;
+  top: 12px;
+}
+
+.capyeye:first-child {
+  left: 12px;
+}
+
+.capyeye:last-child {
+  right: 12px;
+}
+
+.capyleg,
+.capyleg2 {
+  position: absolute;
+  width: 12px;
+  height: 20px;
+  background: #8b7355;
+  border-radius: 6px;
+  bottom: -10px;
+}
+
+.capyleg {
+  left: 10px;
+}
+
+.capyleg2:first-of-type {
+  left: 30px;
+}
+
+.capyleg2:last-of-type {
+  right: 10px;
+}
+
+.capy {
+  position: absolute;
+  width: 80px;
+  height: 40px;
+  background: #8b7355;
+  border-radius: 20px;
+  top: 20px;
+}
+
+.loader {
+  position: absolute;
+  bottom: -20px;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.loaderline {
+  height: 100%;
+  width: 40%;
+  background: linear-gradient(90deg, #8b5cf6, #3b82f6);
+  border-radius: 2px;
+  animation: slide 2s ease-in-out infinite;
+}
+
+@keyframes slide {
+  0%,
+  100% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(250%);
+  }
+}
+
+/* Animaciones suaves */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.capybaraloader {
+  animation: fadeInUp 0.6s ease-out;
+}

@@ -28,3 +28,32 @@ Continue building your app on:
 2. Deploy your chats from the v0 interface
 3. Changes are automatically pushed to this repository
 4. Vercel deploys the latest version from this repository
+
+## Authentication (Google Sign-in)
+
+This project now includes a real Google sign-in flow powered by NextAuth.
+
+To enable it locally, do the following:
+
+1. Install the dependency inside the `frontend` folder:
+
+```bash
+cd frontend
+pnpm add next-auth    # or `npm i next-auth` / `yarn add next-auth`
+```
+
+2. Create a `.env.local` in `frontend/` (you can copy `.env.local.example`) and set:
+
+```
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=replace-with-a-secure-random-string
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+```
+
+3. In Google Cloud Console create OAuth 2.0 credentials and set the redirect URI to:
+	- `http://localhost:3000/api/auth/callback/google`
+
+4. Restart the dev server and click "Comenzar Análisis" → you'll be sent to the real Google sign-in flow.
+
+If you want, I can also integrate a persistent database adapter (e.g. Prisma) so sessions and users are stored server-side.
