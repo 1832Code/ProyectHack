@@ -150,74 +150,19 @@ def get_business_opportunity(query: str, id_company: int = 1, limit: int = 100) 
         
         posts_json = json.dumps(posts_array, ensure_ascii=False, indent=2)
         
-        logger.info(f"🤖 Starting iterative DeepSeek agent (2 steps) to generate business opportunities...")
+        logger.info(f"🤖 Starting DeepSeek agent (1 step) to generate business opportunities...")
         
-        step1_prompt = f"""Eres un analista experto en descubrir fenómenos emergentes específicos en datos de redes sociales. Tu trabajo es identificar menciones concretas, opiniones específicas, sugerencias reales y quejas a competencia.
+        prompt = f"""Eres un estratega de negocio experto en descubrir oportunidades basadas en fenómenos emergentes específicos en datos de redes sociales. Tu misión es analizar los posts y generar oportunidades de negocio concretas que generen valor real.
 
 ARRAY DE POSTS (mantén este formato JSON):
 {posts_json}
 
-PASO 1 - IDENTIFICACIÓN DE FENÓMENOS EMERGENTES ESPECÍFICOS:
-Analiza el array de posts buscando menciones CONCRETAS y ESPECÍFICAS. NO hagas generalizaciones. Identifica:
-
-1. TEMAS EMERGENTES ESPECÍFICOS: ¿De qué se habla específicamente? (ej: "se habla de X", "mencionan Y")
-2. OPINIONES CONCRETAS: ¿Qué opiniones específicas expresan los usuarios? (ej: "algunas personas dicen que...", "hay opiniones de que...")
-3. SUGERENCIAS REALES: ¿Qué sugerencias específicas hacen los usuarios? (ej: "alguien sugirió...", "proponen...")
-4. QUEJAS A COMPETENCIA: ¿Qué quejas específicas hay sobre competidores? (ej: "la queja a tu competencia es...", "mencionan que X hace mal...")
-5. NECESIDADES MENCIONADAS: ¿Qué necesidades específicas mencionan? (ej: "piden...", "solicitan...", "necesitan...")
-6. PATRONES DE COMPORTAMIENTO: ¿Qué comportamientos específicos observas? (ej: "cuando X, entonces Y", "siempre que...")
-7. CONTRADICCIONES ESPECÍFICAS: ¿Qué contradicciones concretas encuentras? (ej: "dicen X pero hacen Y", "quieren A pero no B")
-
-IMPORTANTE: 
-- Sé ESPECÍFICO, no genérico
-- Cita o parafrasea lo que realmente dicen los posts
-- Identifica menciones concretas, no interpretaciones vagas
-- Busca patrones en lo que realmente se menciona, no en lo que asumes
-
-Responde SOLO con un JSON que contenga:
-- "emerging_topics": un array con temas específicos de los que se habla (ej: "se habla de X", "mencionan Y"). Mínimo 3, máximo 7.
-- "specific_opinions": un array con opiniones concretas expresadas (ej: "algunas personas dicen que X", "hay opiniones de que Y"). Mínimo 3.
-- "user_suggestions": un array con sugerencias específicas que hacen los usuarios (ej: "alguien sugirió X", "proponen Y"). Mínimo 2.
-- "competitor_complaints": un array con quejas específicas sobre competencia (ej: "la queja a tu competencia es X", "mencionan que Y hace mal Z"). Incluye todas las que encuentres.
-- "mentioned_needs": un array con necesidades específicas mencionadas (ej: "piden X", "solicitan Y", "necesitan Z"). Mínimo 3.
-- "behavior_patterns": un array con patrones de comportamiento específicos observados (ej: "cuando X, entonces Y", "siempre que A, hacen B"). Mínimo 2.
-- "specific_contradictions": un array con contradicciones concretas (ej: "dicen X pero hacen Y", "quieren A pero no B"). Incluye todas las que encuentres.
-
-Responde SOLO con el JSON, sin texto adicional."""
-        
-        logger.info("🤖 Step 1: Initial analysis...")
-        step1_response = llm.invoke(step1_prompt)
-        step1_content = step1_response.content.strip()
-        
-        if step1_content.startswith("```json"):
-            step1_content = step1_content.replace("```json", "").replace("```", "").strip()
-        elif step1_content.startswith("```"):
-            step1_content = step1_content.replace("```", "").strip()
-        
-        try:
-            step1_result = json.loads(step1_content)
-        except json.JSONDecodeError as e:
-            logger.error(f"❌ Step 1 JSON decode error: {e}")
-            return {
-                "query": query_clean,
-                "results": [],
-                "error": f"Error in step 1: {str(e)}"
-            }
-        
-        step2_prompt = f"""Eres un estratega de negocio experto en descubrir oportunidades basadas en fenómenos emergentes específicos. Tu misión es identificar insights concretos que generen valor real.
-
-ARRAY DE POSTS (mantén este formato JSON):
-{posts_json}
-
-FENÓMENOS EMERGENTES IDENTIFICADOS EN EL PASO 1:
-{json.dumps(step1_result, ensure_ascii=False, indent=2)}
-
-PASO 2 - GENERACIÓN DE OPORTUNIDADES BASADAS EN FENÓMENOS EMERGENTES ESPECÍFICOS:
-Basándote en los fenómenos emergentes específicos del Paso 1, genera entre 1 y 5 oportunidades de negocio. Cada oportunidad DEBE estar fundamentada en menciones concretas, opiniones específicas, sugerencias reales o quejas identificadas.
+ANÁLISIS Y GENERACIÓN DE OPORTUNIDADES:
+Analiza el array de posts buscando menciones CONCRETAS y ESPECÍFICAS. Identifica fenómenos emergentes (temas de los que se habla, opiniones específicas, sugerencias reales, quejas a competencia, necesidades mencionadas) y genera entre 1 y 5 oportunidades de negocio basadas en estos fenómenos.
 
 REGLAS CRÍTICAS:
-1. Los insights DEBEN ser ESPECÍFICOS y mencionar fenómenos concretos encontrados
-2. Usa lenguaje como: "se habla de...", "hay opiniones de que...", "alguien sugirió...", "la queja a tu competencia es...", "algunas personas dicen que..."
+1. Los insights DEBEN ser ESPECÍFICOS y mencionar fenómenos concretos encontrados en los posts
+2. Usa lenguaje como: "se habla de...", "hay opiniones de que...", "alguien sugirió...", "la queja a tu competencia es...", "algunas personas dicen que...", "Hay gente comentando que..."
 3. NO hagas generalizaciones vagas. Cita o parafrasea lo que realmente se menciona en los posts
 4. Cada insight debe mencionar fenómenos emergentes específicos, no observaciones genéricas
 5. Conecta los fenómenos emergentes con oportunidades de negocio concretas
@@ -253,22 +198,22 @@ Responde SOLO con un JSON que contenga:
 
 Responde SOLO con el JSON, sin texto adicional."""
         
-        logger.info("🤖 Step 2: Business opportunities generation...")
-        step2_response = llm.invoke(step2_prompt)
-        step2_content = step2_response.content.strip()
+        logger.info("🤖 Generating business opportunities...")
+        response = llm.invoke(prompt)
+        content = response.content.strip()
         
-        if step2_content.startswith("```json"):
-            step2_content = step2_content.replace("```json", "").replace("```", "").strip()
-        elif step2_content.startswith("```"):
-            step2_content = step2_content.replace("```", "").strip()
+        if content.startswith("```json"):
+            content = content.replace("```json", "").replace("```", "").strip()
+        elif content.startswith("```"):
+            content = content.replace("```", "").strip()
         
         try:
-            step2_result = json.loads(step2_content)
+            result = json.loads(content)
             
-            if isinstance(step2_result, list):
-                opportunities = step2_result
-            elif isinstance(step2_result, dict):
-                opportunities = step2_result.get("opportunities", [])
+            if isinstance(result, list):
+                opportunities = result
+            elif isinstance(result, dict):
+                opportunities = result.get("opportunities", [])
             else:
                 opportunities = []
             
@@ -323,11 +268,11 @@ Responde SOLO con el JSON, sin texto adicional."""
                 "error": None
             }
         except json.JSONDecodeError as e:
-            logger.error(f"❌ Step 2 JSON decode error: {e}. Content: {step2_content[:200]}")
+            logger.error(f"❌ JSON decode error: {e}. Content: {content[:200]}")
             return {
                 "query": query_clean,
                 "results": [],
-                "error": f"Error in step 2: {str(e)}"
+                "error": f"Error parsing response: {str(e)}"
             }
         
     except Exception as e:
