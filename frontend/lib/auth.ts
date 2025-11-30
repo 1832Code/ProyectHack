@@ -9,11 +9,15 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
     }),
   ],
+  pages: {
+    signIn: '/signin',
+    error: '/signin',
+  },
   callbacks: {
     async signIn({ user, account }) {
       // Upsert user into Supabase (server-side). We use email as unique key.
       try {
-        if (user?.email) {
+        if (user?.email && supabaseAdmin) {
           await supabaseAdmin.from("users").upsert(
             {
               email: user.email,
@@ -44,26 +48,22 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
   },
+  secret: process.env.NEXTAUTH_SECRET,
+  debug: process.env.NODE_ENV === "development",
 };
 
 export default authOptions;
 
 // Helpful developer-time warnings if required env vars are missing
-if (process.env.NODE_ENV !== "production") {
-  const missing: string[] = []
-  if (!process.env.GOOGLE_CLIENT_ID) missing.push("GOOGLE_CLIENT_ID")
-  if (!process.env.GOOGLE_CLIENT_SECRET) missing.push("GOOGLE_CLIENT_SECRET")
-  if (!process.env.NEXTAUTH_SECRET) missing.push("NEXTAUTH_SECRET")
+const missing: string[] = []
+if (!process.env.GOOGLE_CLIENT_ID) missing.push("GOOGLE_CLIENT_ID")
+if (!process.env.GOOGLE_CLIENT_SECRET) missing.push("GOOGLE_CLIENT_SECRET")
+if (!process.env.NEXTAUTH_SECRET) missing.push("NEXTAUTH_SECRET")
+if (!process.env.NEXTAUTH_URL) missing.push("NEXTAUTH_URL")
 
-  if (missing.length > 0) {
-    // warn devs with a hint to copy .env.local.example
-    // We don't throw here because local dev can still run parts of the app without auth
-    // but it's helpful to surface the missing variables early.
-    // eslint-disable-next-line no-console
-    console.warn(
-      "Missing environment variables for NextAuth:",
-      missing.join(", "),
-      ". Copy frontend/.env.local.example to .env.local and set values to test authentication."
-    )
-  }
+if (missing.length > 0) {
+  console.error(
+    "Missing environment variables for NextAuth:",
+    missing.join(", ")
+  )
 }
