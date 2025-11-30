@@ -129,7 +129,7 @@ export function SearchCommand({
                 )}
                 <div className="flex flex-col">
                   <span className="font-medium">{company.name}</span>
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-gray-200">
                     {company.industry}
                   </span>
                 </div>

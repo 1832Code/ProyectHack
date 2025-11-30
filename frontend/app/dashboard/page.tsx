@@ -8,6 +8,7 @@ interface CompanyAttributes {
   companyName: string;
   country: string;
   categories: string[];
+  companyLogo?: string;
 }
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
@@ -19,5 +20,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     console.log("Decoded data:", decodedData);
   }
 
-  return <DashboardScreen companyName={decodedData?.companyName ?? ""} />;
+  return (
+    <DashboardScreen
+      companyName={decodedData?.companyName ?? ""}
+      companyLogo={decodedData?.companyLogo}
+    />
+  );
 }

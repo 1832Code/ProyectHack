@@ -351,14 +351,14 @@ export function SearchScreen() {
                 <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-purple-600 animate-pulse" />
                 <span className="relative z-10 flex items-center gap-2">
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Generando análisis...
+                  Generando...
                 </span>
               </>
             ) : (
               <>
                 <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-purple-600 group-hover:from-cyan-600 group-hover:to-purple-700" />
                 <span className="relative z-10 flex items-center gap-2">
-                  Analizar mi negocio
+                  Continuar
                 </span>
               </>
             )}

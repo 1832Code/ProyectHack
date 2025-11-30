@@ -9,12 +9,14 @@ interface ConfirmCompanyButtonProps {
   categories?: string[];
   companyName?: string;
   country?: string;
+  companyLogo?: string;
 }
 
 export function ConfirmCompanyButton({
   categories,
   companyName,
   country,
+  companyLogo,
 }: ConfirmCompanyButtonProps) {
   const { fetchCompanyPosts, resetAll } = useServices();
   const router = useRouter();
@@ -25,24 +27,25 @@ export function ConfirmCompanyButton({
       companyName,
       country,
       categories,
+      companyLogo,
     };
     // Send a user-action to the server to persist this confirmation (requires authenticated user)
-    ;(async () => {
+    (async () => {
       try {
         await fetch("/api/user-actions", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ type: "company_confirmation", payload }),
-        })
+        });
       } catch (e) {
         // Log but continue navigation if saving fails
-        console.error("Failed to save user action:", e)
+        console.error("Failed to save user action:", e);
       } finally {
-        const encoded = btoa(encodeURIComponent(JSON.stringify(payload)))
-        router.push(`/dashboard?data=${encoded}`)
+        const encoded = btoa(encodeURIComponent(JSON.stringify(payload)));
+        router.push(`/dashboard?data=${encoded}`);
       }
-    })()
-  }; 
+    })();
+  };
 
   useEffect(() => {
     // Only run once on mount - reset all data and start fresh fetch
@@ -56,10 +59,9 @@ export function ConfirmCompanyButton({
     fetchCompanyPosts({
       query: companyName ?? "",
       maxItems: 10,
-      platforms: ["google"],
+      platforms: ["tiktok"],
     });
   }, [companyName, fetchCompanyPosts, resetAll]);
-
 
   return (
     <Button

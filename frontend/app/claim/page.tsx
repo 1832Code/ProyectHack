@@ -13,7 +13,7 @@ export default async function Claim({ searchParams }: ClaimPageProps) {
   const { companyName, country } = await searchParams;
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-background p-4">
+    <main className="min-h-screen flex items-center justify-center bg-background ">
       <Suspense fallback={<ClaimLoading />}>
         <CompanyConfirmation
           companyName={companyName ?? ""}

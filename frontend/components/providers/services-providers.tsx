@@ -44,8 +44,12 @@ function removeDuplicatePosts(posts: CompanyPost[]): CompanyPost[] {
 
 // Helper function to reorder posts with images at the top
 function reorderPostsWithImagesFirst(posts: CompanyPost[]): CompanyPost[] {
-  const postsWithImages = posts.filter((post) => post.image && post.image.trim() !== "");
-  const postsWithoutImages = posts.filter((post) => !post.image || post.image.trim() === "");
+  const postsWithImages = posts.filter(
+    (post) => post.image && post.image.trim() !== ""
+  );
+  const postsWithoutImages = posts.filter(
+    (post) => !post.image || post.image.trim() === ""
+  );
   return [...postsWithImages, ...postsWithoutImages];
 }
 
@@ -74,7 +78,9 @@ export function ServicesProvider({ children }: ServicesProviderProps) {
   );
 
   const [analytics, setAnalytics] = useState<AnalyticsResponse | null>(null);
-  const [opportunity, setOpportunity] = useState<OpportunityResponse | null>(null);
+  const [opportunity, setOpportunity] = useState<OpportunityResponse | null>(
+    null
+  );
 
   const [error, setError] = useState<string | null>(null);
   const [analyticsError, setAnalyticsError] = useState<string | null>(null);
