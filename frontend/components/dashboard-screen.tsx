@@ -1,89 +1,46 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { cn } from "@/lib/utils"
-import { Badge } from "@/components/ui/badge"
-import { useEffect, useState, useCallback, useRef } from "react"
-
-const ArrowLeftIcon = ({ className }: { className?: string }) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={className}
-  >
-    <path d="m12 19-7-7 7-7" />
-    <path d="M19 12H5" />
-  </svg>
-)
-
-const Loader2Icon = ({ className }: { className?: string }) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={cn("animate-spin", className)}
-  >
-    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-  </svg>
-)
+import Link from "next/link";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { useEffect, useState, useCallback, useRef } from "react";
+import {
+  ArrowLeft,
+  TrendingUp,
+  Users,
+  MessageCircle,
+  Youtube,
+  MessageSquare,
+  FileText,
+  ThumbsUp,
+  ThumbsDown,
+  Minus,
+  Activity,
+  BarChart3,
+  Sparkles,
+} from "lucide-react";
 
 const PlatformIcons = {
-  youtube: (
-    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
-      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93-.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-    </svg>
-  ),
-  tiktok: (
-    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
-      <path d="M12.525.02c1.31-.02 2.61-.012 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z" />
-    </svg>
-  ),
-  instagram: (
-    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
-      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.057-1.644.07-4.849.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.073-1.689-.073-4.948 0-3.205.012-3.583.072-4.948.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-    </svg>
-  ),
-  x: (
-    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
-      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-    </svg>
-  ),
-  facebook: (
-    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
-      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-    </svg>
-  ),
-  article: (
-    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
-      <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" />
-    </svg>
-  ),
-}
+  youtube: Youtube,
+  tiktok: MessageSquare,
+  instagram: MessageSquare,
+  x: MessageSquare,
+  facebook: Users,
+  article: FileText,
+};
 
 const allMentions = [
   {
     id: 1,
     platform: "tiktok" as const,
     username: "@delivery_fails",
-    avatar: "/tiktok-user-avatar.jpg",
-    content: "POV: When Rappi says 10 minutes but you've been waiting 45 #rappi #delivery #peru",
-    engagement: "245k views",
+    avatar: "/placeholder.svg?height=40&width=40",
+    content:
+      "Cuando Rappi dice 10 minutos pero llevas esperando 45 minutos #rappi #delivery #perú",
+    engagement: "245k vistas",
     time: "2h",
     sentiment: "negative" as const,
   },
@@ -91,9 +48,10 @@ const allMentions = [
     id: 2,
     platform: "instagram" as const,
     username: "@foodie_lima",
-    avatar: "/instagram-food-blogger.jpg",
-    content: "Tried the new RappiPrime and it's worth every penny. Unlimited free shipping and great deals",
-    engagement: "1.2k likes",
+    avatar: "/placeholder.svg?height=40&width=40",
+    content:
+      "Probé el nuevo RappiPrime y vale cada centavo. Envío ilimitado gratis y buenas promociones",
+    engagement: "1.2k me gusta",
     time: "3h",
     sentiment: "positive" as const,
   },
@@ -101,9 +59,10 @@ const allMentions = [
     id: 3,
     platform: "youtube" as const,
     username: "Tech Review Peru",
-    avatar: "/youtube-tech-channel-logo.jpg",
-    content: "Full comparison: Rappi vs PedidosYa vs DiDi Food - Which is better in 2024? | Complete Review",
-    engagement: "89k views",
+    avatar: "/placeholder.svg?height=40&width=40",
+    content:
+      "Comparativa completa: Rappi vs PedidosYa vs DiDi Food - ¿Cuál es mejor en 2024? | Reseña completa",
+    engagement: "89k vistas",
     time: "5h",
     sentiment: "neutral" as const,
   },
@@ -111,9 +70,10 @@ const allMentions = [
     id: 4,
     platform: "x" as const,
     username: "@carlosm_pe",
-    avatar: "/male-twitter-user.jpg",
-    content: "The Rappi app is getting slower every day. Anyone else having issues? Can't even order properly.",
-    engagement: "342 retweets",
+    avatar: "/placeholder.svg?height=40&width=40",
+    content:
+      "La app de Rappi cada día va más lenta. ¿Alguien más con problemas? No puedo ni ordenar correctamente.",
+    engagement: "342 retuits",
     time: "6h",
     sentiment: "negative" as const,
   },
@@ -121,9 +81,10 @@ const allMentions = [
     id: 5,
     platform: "article" as const,
     username: "El Comercio",
-    avatar: "/peruvian-newspaper-logo.jpg",
-    content: "Rappi announces expansion to 5 new cities in Peru and promises 2,000 new jobs for delivery drivers",
-    engagement: "Economy",
+    avatar: "/placeholder.svg?height=40&width=40",
+    content:
+      "Rappi anuncia expansión a 5 nuevas ciudades en Perú y promete 2.000 nuevos empleos para repartidores",
+    engagement: "Economía",
     time: "8h",
     sentiment: "positive" as const,
   },
@@ -131,9 +92,10 @@ const allMentions = [
     id: 6,
     platform: "facebook" as const,
     username: "Lima Deals",
-    avatar: "/deals-group-logo.jpg",
-    content: "RAPPI DISCOUNT CODE: Use 'SAVE30' for 30% off your next order. Valid until tomorrow!",
-    engagement: "2.3k shares",
+    avatar: "/placeholder.svg?height=40&width=40",
+    content:
+      "CÓDIGO DE DESCUENTO RAPPI: Usa 'SAVE30' para 30% de descuento en tu próximo pedido. ¡Válido hasta mañana!",
+    engagement: "2.3k compartidos",
     time: "10h",
     sentiment: "positive" as const,
   },
@@ -141,9 +103,10 @@ const allMentions = [
     id: 7,
     platform: "tiktok" as const,
     username: "@delivery_official",
-    avatar: "/delivery-person.png",
-    content: "A normal day as a Rappi delivery driver in Lima. Life of a rappitendero #rappi #work",
-    engagement: "567k views",
+    avatar: "/placeholder.svg?height=40&width=40",
+    content:
+      "Un día normal como repartidor de Rappi en Lima. Vida de repartidor #rappi #trabajo",
+    engagement: "567k vistas",
     time: "12h",
     sentiment: "neutral" as const,
   },
@@ -151,9 +114,10 @@ const allMentions = [
     id: 8,
     platform: "instagram" as const,
     username: "@peruvian_restaurant",
-    avatar: "/peruvian-restaurant-logo.jpg",
-    content: "We're now on Rappi! Order your favorite ceviche with free delivery this week. Link in bio",
-    engagement: "856 likes",
+    avatar: "/placeholder.svg?height=40&width=40",
+    content:
+      "¡Ahora estamos en Rappi! Pide tu ceviche favorito con delivery gratis esta semana. Enlace en la bio",
+    engagement: "856 me gusta",
     time: "14h",
     sentiment: "positive" as const,
   },
@@ -161,9 +125,10 @@ const allMentions = [
     id: 9,
     platform: "x" as const,
     username: "@startup_latam",
-    avatar: "/startup-news-logo.jpg",
-    content: "Rappi reports 40% growth in Peru during Q3. The delivery market continues to expand in the region.",
-    engagement: "189 likes",
+    avatar: "/placeholder.svg?height=40&width=40",
+    content:
+      "Rappi reporta 40% de crecimiento en Perú durante el tercer trimestre. El mercado de delivery sigue expandiéndose en la región.",
+    engagement: "189 me gusta",
     time: "16h",
     sentiment: "positive" as const,
   },
@@ -171,523 +136,461 @@ const allMentions = [
     id: 10,
     platform: "youtube" as const,
     username: "3 Pepitos Podcast",
-    avatar: "/podcast-microphone-logo.jpg",
-    content: "Ep. 234: We discuss the delivery app war in Peru. Rappi, PedidosYa and the new players",
-    engagement: "12k views",
-    time: "1d",
-    sentiment: "neutral" as const,
-  },
-  {
-    id: 11,
-    platform: "article" as const,
-    username: "Gestion",
-    avatar: "/business-newspaper-logo.jpg",
-    content: "Rappi launches RappiBank in Peru: Credit card with cashback on all orders",
-    engagement: "Finance",
-    time: "1d",
-    sentiment: "positive" as const,
-  },
-  {
-    id: 12,
-    platform: "facebook" as const,
-    username: "Delivery Complaints Peru",
-    avatar: "/complaint-group.jpg",
+    avatar: "/placeholder.svg?height=40&width=40",
     content:
-      "Watch out for Rappi, they charged me twice and support hasn't responded in 3 days. Anyone know how to file a claim?",
-    engagement: "456 comments",
+      "Ep. 234: Hablamos sobre la guerra de apps de delivery en Perú. Rappi, PedidosYa y nuevos actores",
+    engagement: "12k vistas",
     time: "1d",
-    sentiment: "negative" as const,
-  },
-  {
-    id: 13,
-    platform: "instagram" as const,
-    username: "@influencer_peru",
-    avatar: "/female-influencer.png",
-    content: "My experience with RappiTravel was amazing. Booked hotel and flight all from the app! Highly recommended",
-    engagement: "3.4k likes",
-    time: "1d",
-    sentiment: "positive" as const,
-  },
-  {
-    id: 14,
-    platform: "tiktok" as const,
-    username: "@viral_food",
-    avatar: "/food-viral-tiktok.jpg",
-    content: "This restaurant is only on Rappi and has the best burger in Lima #foodtiktok #rappi #lima",
-    engagement: "892k views",
-    time: "2d",
-    sentiment: "positive" as const,
-  },
-  {
-    id: 15,
-    platform: "x" as const,
-    username: "@techbro_lima",
-    avatar: "/tech-guy-avatar.jpg",
-    content: "Rappi's real-time tracking is better than any other app. Facts.",
-    engagement: "78 likes",
-    time: "2d",
-    sentiment: "positive" as const,
-  },
-  {
-    id: 16,
-    platform: "youtube" as const,
-    username: "Finance For Everyone",
-    avatar: "/finance-youtube-channel.jpg",
-    content: "Is RappiPay worth it? Complete analysis of Rappi's digital wallet in Peru",
-    engagement: "45k views",
-    time: "2d",
     sentiment: "neutral" as const,
   },
-  {
-    id: 17,
-    platform: "facebook" as const,
-    username: "Miraflores Neighbors",
-    avatar: "/neighborhood-group.jpg",
-    content: "Rappi delivery drivers are driving too fast in the area. Watch out for the kids!",
-    engagement: "234 comments",
-    time: "2d",
-    sentiment: "negative" as const,
-  },
-  {
-    id: 18,
-    platform: "article" as const,
-    username: "Peru21",
-    avatar: "/peru-news-logo.jpg",
-    content: "Rappi and the Ministry of Labor sign agreement to improve conditions for delivery drivers",
-    engagement: "Politics",
-    time: "3d",
-    sentiment: "positive" as const,
-  },
-  {
-    id: 19,
-    platform: "instagram" as const,
-    username: "@newmom",
-    avatar: "/mom-blogger.jpg",
-    content: "With Rappi I can order diapers and food without leaving home. Lifesaver for new moms",
-    engagement: "2.1k likes",
-    time: "3d",
-    sentiment: "positive" as const,
-  },
-  {
-    id: 20,
-    platform: "tiktok" as const,
-    username: "@peruvian_humor",
-    avatar: "/comedy-tiktok.jpg",
-    content: "When the Rappi driver calls but you don't know where your own house is #humor #rappi",
-    engagement: "1.2M views",
-    time: "3d",
-    sentiment: "neutral" as const,
-  },
-  {
-    id: 21,
-    platform: "x" as const,
-    username: "@digital_journalist",
-    avatar: "/placeholder.svg?height=40&width=40",
-    content: "Rappi introduces artificial intelligence to predict delivery times with greater accuracy.",
-    engagement: "445 retweets",
-    time: "3d",
-    sentiment: "positive" as const,
-  },
-  {
-    id: 22,
-    platform: "facebook" as const,
-    username: "Peru Entrepreneurs",
-    avatar: "/placeholder.svg?height=40&width=40",
-    content: "Has anyone had success selling through Rappi? I want to add my dessert business",
-    engagement: "89 comments",
-    time: "4d",
-    sentiment: "neutral" as const,
-  },
-  {
-    id: 23,
-    platform: "youtube" as const,
-    username: "Vlog Lima",
-    avatar: "/placeholder.svg?height=40&width=40",
-    content: "24 HOURS eating ONLY from RAPPI - How much did I spend? The result will surprise you",
-    engagement: "156k views",
-    time: "4d",
-    sentiment: "neutral" as const,
-  },
-  {
-    id: 24,
-    platform: "instagram" as const,
-    username: "@peruvian_chef",
-    avatar: "/placeholder.svg?height=40&width=40",
-    content: "Partnership with Rappi to bring authentic Peruvian food to all of Lima. Coming soon!",
-    engagement: "5.6k likes",
-    time: "4d",
-    sentiment: "positive" as const,
-  },
-  {
-    id: 25,
-    platform: "article" as const,
-    username: "La Republica",
-    avatar: "/placeholder.svg?height=40&width=40",
-    content: "Rappi surpasses 2 million active users in Peru according to latest quarterly report",
-    engagement: "Technology",
-    time: "5d",
-    sentiment: "positive" as const,
-  },
-  {
-    id: 26,
-    platform: "tiktok" as const,
-    username: "@uni_student",
-    avatar: "/placeholder.svg?height=40&width=40",
-    content: "Rappi has a student discount and nobody talks about it! Code: UNI2024 #rappi #students",
-    engagement: "234k views",
-    time: "5d",
-    sentiment: "positive" as const,
-  },
-  {
-    id: 27,
-    platform: "x" as const,
-    username: "@consumer_rights",
-    avatar: "/placeholder.svg?height=40&width=40",
-    content: "Indecopi opens investigation into Rappi for alleged improper charges. Pending results.",
-    engagement: "1.2k retweets",
-    time: "5d",
-    sentiment: "negative" as const,
-  },
-  {
-    id: 28,
-    platform: "facebook" as const,
-    username: "San Isidro Foodies",
-    avatar: "/placeholder.svg?height=40&width=40",
-    content: "The best restaurants in San Isidro that are ONLY on Rappi. Thread",
-    engagement: "567 reactions",
-    time: "6d",
-    sentiment: "positive" as const,
-  },
-  {
-    id: 29,
-    platform: "instagram" as const,
-    username: "@fitness_lima",
-    avatar: "/placeholder.svg?height=40&width=40",
-    content: "Rappi now has a healthy food category! Finally I can order my bowls guilt-free",
-    engagement: "1.8k likes",
-    time: "6d",
-    sentiment: "positive" as const,
-  },
-  {
-    id: 30,
-    platform: "youtube" as const,
-    username: "Easy Economics",
-    avatar: "/placeholder.svg?height=40&width=40",
-    content: "Rappi's business model explained: How does this Colombian startup make money?",
-    engagement: "78k views",
-    time: "1w",
-    sentiment: "neutral" as const,
-  },
-]
+];
 
+// Paleta de 3 colores: azul, púrpura, esmeralda
 const platformColors = {
-  youtube: "text-[#ff4444] bg-[#fff0f0]",
-  tiktok: "text-foreground bg-secondary",
-  instagram: "text-[#e1306c] bg-[#fff0f5]",
-  x: "text-foreground bg-secondary",
-  facebook: "text-[#1877f2] bg-[#f0f5ff]",
-  article: "text-primary bg-primary/10",
-}
+  youtube: "text-white bg-blue-500 border-blue-400 shadow-sm",
+  tiktok: "text-white bg-purple-500 border-purple-400 shadow-sm",
+  instagram: "text-white bg-purple-500 border-purple-400 shadow-sm",
+  x: "text-white bg-blue-500 border-blue-400 shadow-sm",
+  facebook: "text-white bg-blue-500 border-blue-400 shadow-sm",
+  article: "text-white bg-emerald-500 border-emerald-400 shadow-sm",
+};
 
 const sentimentColors = {
-  positive: "bg-primary/15 text-primary",
-  negative: "bg-destructive/15 text-destructive",
-  neutral: "bg-muted text-muted-foreground",
-}
+  positive: "bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm",
+  negative: "bg-blue-50 text-blue-700 border-blue-200 shadow-sm",
+  neutral: "bg-purple-50 text-purple-700 border-purple-200 shadow-sm",
+};
+
+const sentimentIcons = {
+  positive: ThumbsUp,
+  negative: ThumbsDown,
+  neutral: Minus,
+};
 
 export function DashboardScreen() {
-  const [isSticky, setIsSticky] = useState(false)
-  const [displayedMentions, setDisplayedMentions] = useState(allMentions.slice(0, 5))
-  const [isLoading, setIsLoading] = useState(false)
-  const [hasMore, setHasMore] = useState(true)
-  const loaderRef = useRef<HTMLDivElement>(null)
+  const [isSticky, setIsSticky] = useState(false);
+  const [displayedMentions, setDisplayedMentions] = useState(
+    allMentions.slice(0, 5)
+  );
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const loaderRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsSticky(window.scrollY > 120)
-    }
-    window.addEventListener("scroll", handleScroll, { passive: true })
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
+      setIsSticky(window.scrollY > 120);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const loadMore = useCallback(() => {
-    if (isLoading || !hasMore) return
+    if (isLoading || !hasMore) return;
 
-    setIsLoading(true)
-
+    setIsLoading(true);
     setTimeout(() => {
-      const currentLength = displayedMentions.length
-      const nextItems = allMentions.slice(currentLength, currentLength + 5)
-
+      const currentLength = displayedMentions.length;
+      const nextItems = allMentions.slice(currentLength, currentLength + 5);
       if (nextItems.length === 0) {
-        setHasMore(false)
+        setHasMore(false);
       } else {
-        setDisplayedMentions((prev) => [...prev, ...nextItems])
+        setDisplayedMentions((prev) => [...prev, ...nextItems]);
       }
-      setIsLoading(false)
-    }, 800)
-  }, [displayedMentions.length, isLoading, hasMore])
+      setIsLoading(false);
+    }, 800);
+  }, [displayedMentions.length, isLoading, hasMore]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMore && !isLoading) {
-          loadMore()
+          loadMore();
         }
       },
-      { threshold: 0.1 },
-    )
+      { threshold: 0.1 }
+    );
 
     if (loaderRef.current) {
-      observer.observe(loaderRef.current)
+      observer.observe(loaderRef.current);
     }
 
-    return () => observer.disconnect()
-  }, [loadMore, hasMore, isLoading])
+    return () => observer.disconnect();
+  }, [loadMore, hasMore, isLoading]);
 
   return (
-    <div className="min-h-screen bg-background">
-      <div
-        className={cn(
-          "sticky top-0 z-50 transition-all duration-300 flex justify-center",
-          isSticky ? "pt-4 px-4" : "px-5 pt-6 pb-0",
-        )}
-      >
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/20 to-purple-50/20">
+      <div className="relative z-10">
+        {/* Header */}
         <div
           className={cn(
-            "transition-all duration-300",
-            isSticky
-              ? "py-2 px-4 bg-background/80 backdrop-blur-xl rounded-full border border-border/50 shadow-lg w-fit"
-              : "w-full bg-background",
+            "sticky top-0 z-50 transition-all duration-300 flex justify-center",
+            isSticky ? "pt-4 px-4" : "px-5 pt-6 pb-0"
           )}
         >
           <div
             className={cn(
-              "transition-all duration-300 overflow-hidden",
-              isSticky ? "h-0 opacity-0 mb-0" : "h-auto opacity-100 mb-5",
+              "transition-all duration-300",
+              isSticky
+                ? "py-2 px-4 bg-white/90 backdrop-blur-xl rounded-2xl border border-slate-200 shadow-lg w-fit"
+                : "w-full bg-transparent"
             )}
           >
-            <Button
-              variant="secondary"
-              size="sm"
-              asChild
-              className="bg-card hover:bg-secondary text-muted-foreground hover:text-foreground rounded-full px-3"
+            <div
+              className={cn(
+                "transition-all duration-300 overflow-hidden",
+                isSticky ? "h-0 opacity-0 mb-0" : "h-auto opacity-100 mb-5"
+              )}
             >
-              <Link href="/buscar">
-                <ArrowLeftIcon className="w-4 h-4 mr-1" />
-                New search
-              </Link>
-            </Button>
-          </div>
-
-          <header
-            className={cn(
-              "flex items-center transition-all duration-300",
-              isSticky ? "justify-center gap-2" : "gap-3 mb-5",
-            )}
-          >
-            <div className="flex items-center gap-2">
               <Button
                 variant="secondary"
-                size="icon"
+                size="sm"
                 asChild
-                className={cn(
-                  "bg-card hover:bg-secondary text-muted-foreground hover:text-foreground transition-all duration-300 rounded-full",
-                  isSticky ? "w-7 h-7 opacity-100" : "w-0 h-0 opacity-0 overflow-hidden",
-                )}
+                className="bg-white/80 hover:bg-white text-slate-700 hover:text-slate-900 rounded-full px-4 border border-slate-200 shadow-sm backdrop-blur-sm"
               >
                 <Link href="/buscar">
-                  <ArrowLeftIcon className="w-4 h-4" />
+                  <ArrowLeft className="w-4 h-4 mr-1" />
+                  Nueva búsqueda
                 </Link>
               </Button>
-              <Avatar
-                className={cn(
-                  "ring-2 ring-primary/30 transition-all duration-300",
-                  isSticky ? "h-7 w-7 rounded-full" : "h-12 w-12 rounded-2xl",
-                )}
-              >
-                <AvatarImage src="/rappi-logo.png" alt="Rappi" />
-                <AvatarFallback
+            </div>
+
+            <header
+              className={cn(
+                "flex items-center transition-all duration-300",
+                isSticky ? "justify-center gap-2" : "gap-3 mb-5"
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  asChild
                   className={cn(
-                    "bg-primary/10 text-primary font-semibold transition-all duration-300",
-                    isSticky ? "rounded-full text-xs" : "rounded-2xl text-base",
+                    "bg-white/80 hover:bg-white text-slate-700 hover:text-slate-900 transition-all duration-300 rounded-full border border-slate-200 shadow-sm backdrop-blur-sm",
+                    isSticky
+                      ? "w-8 h-8 opacity-100"
+                      : "w-0 h-0 opacity-0 overflow-hidden"
                   )}
                 >
-                  RA
-                </AvatarFallback>
-              </Avatar>
-              <div
-                className={cn(
-                  "flex items-center gap-3 transition-all duration-300",
-                  isSticky ? "opacity-100 ml-2" : "opacity-0 w-0 overflow-hidden",
-                )}
-              >
-                <div className="h-4 w-px bg-border" />
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-bold text-foreground">32k</span>
-                    <span className="text-xs text-primary">↑2%</span>
-                  </div>
-                  <div className="h-3 w-px bg-border" />
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-bold text-foreground">89%</span>
-                    <span className="text-xs text-primary">↑12%</span>
-                  </div>
-                </div>
-              </div>
-              <div className={cn("transition-all duration-300", isSticky ? "hidden" : "block")}>
-                <h1 className="text-xl font-bold text-foreground font-serif">Rappi</h1>
-                <p className="text-sm text-muted-foreground">Peru · Sep 20th</p>
-              </div>
-            </div>
-          </header>
-        </div>
-      </div>
-
-      <div className="px-5 pt-5">
-        <div className="grid grid-cols-2 gap-3 mb-8">
-          <Card className="border-0 bg-card rounded-2xl">
-            <CardContent className="p-4">
-              <p className="text-sm text-muted-foreground mb-1">mentions</p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-bold text-foreground font-serif">32k</span>
-                <span className="text-sm text-primary font-medium">↑2%</span>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="border-0 bg-card rounded-2xl">
-            <CardContent className="p-4">
-              <p className="text-sm text-muted-foreground mb-1">approval</p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-bold text-foreground font-serif">89%</span>
-                <span className="text-sm text-primary font-medium">↑12%</span>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="mb-8">
-          <p className="text-sm text-muted-foreground mb-3">sentiment</p>
-          <Card className="border-0 bg-card rounded-2xl">
-            <CardContent className="p-4">
-              <svg viewBox="0 0 300 48" className="w-full h-12">
-                <path
-                  d="M0,40 Q30,38 60,32 T120,28 T180,20 T240,16 T300,8"
-                  fill="none"
-                  stroke="oklch(0.55 0.22 280)"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="mb-8">
-          <div className="flex flex-wrap gap-2">
-            {["chicken", "stale", "bad service", "scam"].map((tag) => (
-              <Badge
-                key={tag}
-                variant="outline"
-                className="px-4 py-2 text-sm font-normal rounded-full border-border bg-background text-foreground hover:bg-secondary cursor-pointer transition-colors"
-              >
-                {tag}
-              </Badge>
-            ))}
-          </div>
-        </div>
-
-        <div className="mb-8">
-          <p className="text-base text-foreground mb-4 font-serif">talking now</p>
-          <div className="flex flex-col gap-2">
-            <Card className="border-0 bg-card rounded-xl">
-              <CardContent className="p-3 flex items-center justify-between">
-                <span className="text-sm font-medium text-foreground">Complaints about Pios Chicken</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">+200 i</span>
-                  <div className="p-1.5 rounded-lg bg-[#fff0f5]">{PlatformIcons.instagram}</div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="border-0 bg-card rounded-xl">
-              <CardContent className="p-3 flex items-center justify-between">
-                <span className="text-sm font-medium text-foreground">Talk about stale chicken in Lima</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">+20 i</span>
-                  <div className="p-1.5 rounded-lg bg-secondary border border-border">{PlatformIcons.tiktok}</div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-          <button className="w-full text-center text-sm text-muted-foreground mt-3 hover:text-primary transition-colors">
-            see all
-          </button>
-        </div>
-
-        <section className="pb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base text-foreground font-serif">Social mentions</h2>
-            <span className="text-sm text-muted-foreground">{allMentions.length} total</span>
-          </div>
-
-          <div className="flex flex-col gap-3">
-            {displayedMentions.map((mention) => (
-              <Card key={mention.id} className="border-0 bg-card rounded-2xl overflow-hidden">
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <div className={cn("p-2 rounded-xl shrink-0", platformColors[mention.platform])}>
-                      {PlatformIcons[mention.platform]}
+                  <Link href="/buscar">
+                    <ArrowLeft className="w-4 h-4" />
+                  </Link>
+                </Button>
+                <Avatar
+                  className={cn(
+                    "ring-2 ring-blue-100 transition-all duration-300 shadow-lg",
+                    isSticky ? "h-8 w-8 rounded-xl" : "h-12 w-12 rounded-2xl"
+                  )}
+                >
+                  <AvatarImage src="/rappi-logo.png" alt="Rappi" />
+                  <AvatarFallback
+                    className={cn(
+                      "bg-gradient-to-br from-blue-500 to-purple-500 text-white font-semibold transition-all duration-300",
+                      isSticky ? "rounded-xl text-xs" : "rounded-2xl text-base"
+                    )}
+                  >
+                    RA
+                  </AvatarFallback>
+                </Avatar>
+                <div
+                  className={cn(
+                    "flex items-center gap-3 transition-all duration-300",
+                    isSticky
+                      ? "opacity-100 ml-2"
+                      : "opacity-0 w-0 overflow-hidden"
+                  )}
+                >
+                  <div className="h-4 w-px bg-slate-200" />
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-bold text-slate-800">
+                        32k
+                      </span>
+                      <span className="text-xs bg-emerald-500 text-white px-1.5 py-0.5 rounded-full font-medium flex items-center gap-0.5">
+                        <TrendingUp className="w-3 h-3" />
+                        2%
+                      </span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2 mb-1">
-                        <span className="text-sm font-medium text-foreground truncate">{mention.username}</span>
-                        <span className="text-xs text-muted-foreground shrink-0">{mention.time}</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2 mb-2">
-                        {mention.content}
-                      </p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground">{mention.engagement}</span>
-                        <Badge
-                          variant="secondary"
-                          className={cn(
-                            "text-xs font-normal px-2 py-0.5 rounded-full",
-                            sentimentColors[mention.sentiment],
-                          )}
-                        >
-                          {mention.sentiment === "positive"
-                            ? "Positive"
-                            : mention.sentiment === "negative"
-                              ? "Negative"
-                              : "Neutral"}
-                        </Badge>
-                      </div>
+                    <div className="h-3 w-px bg-slate-200" />
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-bold text-slate-800">
+                        89%
+                      </span>
+                      <span className="text-xs bg-emerald-500 text-white px-1.5 py-0.5 rounded-full font-medium flex items-center gap-0.5">
+                        <TrendingUp className="w-3 h-3" />
+                        12%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div
+                  className={cn(
+                    "transition-all duration-300",
+                    isSticky ? "hidden" : "block"
+                  )}
+                >
+                  <h1 className="text-2xl font-bold text-slate-800">Rappi</h1>
+                  <p className="text-sm text-slate-500">Perú · 20 de sept.</p>
+                </div>
+              </div>
+            </header>
+          </div>
+        </div>
+
+        <div className="px-5 pt-5">
+          {/* Stats Cards */}
+          <div className="grid grid-cols-2 gap-4 mb-8">
+            <Card className="border border-slate-200 bg-white/80 rounded-2xl shadow-lg overflow-hidden">
+              <CardContent className="p-5">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-2 rounded-lg bg-blue-500 shadow-sm">
+                    <MessageCircle className="w-4 h-4 text-white" />
+                  </div>
+                  <p className="text-sm text-slate-600 font-medium">
+                    Menciones
+                  </p>
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-bold text-slate-800">32k</span>
+                  <span className="text-sm bg-emerald-500 text-white px-2 py-1 rounded-full font-medium flex items-center gap-0.5">
+                    <TrendingUp className="w-3 h-3" />
+                    2%
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border border-slate-200 bg-white/80 rounded-2xl shadow-lg overflow-hidden">
+              <CardContent className="p-5">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-2 rounded-lg bg-purple-500 shadow-sm">
+                    <Activity className="w-4 h-4 text-white" />
+                  </div>
+                  <p className="text-sm text-slate-600 font-medium">
+                    Aprobación
+                  </p>
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-bold text-slate-800">89%</span>
+                  <span className="text-sm bg-emerald-500 text-white px-2 py-1 rounded-full font-medium flex items-center gap-0.5">
+                    <TrendingUp className="w-3 h-3" />
+                    12%
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Sentiment Chart */}
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="p-2 rounded-lg bg-blue-500 shadow-sm">
+                <BarChart3 className="w-4 h-4 text-white" />
+              </div>
+              <p className="text-sm text-slate-600 font-medium">
+                Tendencia de sentimiento
+              </p>
+            </div>
+            <Card className="border border-slate-200 bg-white/80 rounded-2xl shadow-lg">
+              <CardContent className="p-5">
+                <svg viewBox="0 0 300 48" className="w-full h-12">
+                  <defs>
+                    <linearGradient
+                      id="sentimentGradient"
+                      x1="0%"
+                      y1="0%"
+                      x2="100%"
+                      y2="0%"
+                    >
+                      <stop offset="0%" stopColor="#3b82f6" />
+                      <stop offset="50%" stopColor="#8b5cf6" />
+                      <stop offset="100%" stopColor="#10b981" />
+                    </linearGradient>
+                  </defs>
+                  <path
+                    d="M0,40 Q30,38 60,32 T120,28 T180,20 T240,16 T300,8"
+                    fill="none"
+                    stroke="url(#sentimentGradient)"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Trending Topics */}
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="p-2 rounded-lg bg-purple-500 shadow-sm">
+                <TrendingUp className="w-4 h-4 text-white" />
+              </div>
+              <p className="text-sm text-slate-600 font-medium">
+                Temas en tendencia
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {[
+                "calidad del pollo",
+                "tiempos de entrega",
+                "servicio al cliente",
+                "rendimiento de la app",
+              ].map((tag) => (
+                <Badge
+                  key={tag}
+                  variant="outline"
+                  className="px-4 py-2 text-sm font-medium rounded-full border-slate-200 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors shadow-sm"
+                >
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+          </div>
+
+          {/* Live Conversations */}
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="p-2 rounded-lg bg-emerald-500 shadow-sm">
+                <Users className="w-4 h-4 text-white" />
+              </div>
+              <p className="text-base text-slate-800 font-semibold">
+                Conversaciones en vivo
+              </p>
+            </div>
+            <div className="flex flex-col gap-3">
+              <Card className="border border-slate-200 bg-white/80 rounded-xl shadow-lg">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <span className="text-sm font-medium text-slate-800">
+                    Quejas sobre Pios Chicken
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-slate-500">+200</span>
+                    <div
+                      className={cn(
+                        "p-2 rounded-lg border shadow-sm",
+                        platformColors.instagram
+                      )}
+                    >
+                      <PlatformIcons.instagram className="w-4 h-4" />
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            ))}
+              <Card className="border border-slate-200 bg-white/80 rounded-xl shadow-lg">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <span className="text-sm font-medium text-slate-800">
+                    Conversan sobre pollo en mal estado en Lima
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-slate-500">+20</span>
+                    <div
+                      className={cn(
+                        "p-2 rounded-lg border shadow-sm",
+                        platformColors.tiktok
+                      )}
+                    >
+                      <PlatformIcons.tiktok className="w-4 h-4" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            <button className="w-full text-center text-sm text-blue-600 mt-3 hover:text-blue-700 transition-colors font-medium">
+              Ver todas las conversaciones
+            </button>
           </div>
 
-          <div ref={loaderRef} className="flex justify-center py-6">
-            {isLoading && (
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Loader2Icon className="w-5 h-5" />
-                <span className="text-sm">Loading more mentions...</span>
-              </div>
-            )}
-            {!hasMore && displayedMentions.length > 0 && (
-              <p className="text-sm text-muted-foreground">No more mentions</p>
-            )}
-          </div>
+          {/* Social Mentions */}
+          <section className="pb-8">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2"></div>
+              <span className="text-sm text-slate-500">
+                {allMentions.length} en total
+              </span>
+            </div>
 
-          <div className="mt-2">
-            <Button className="w-full h-14 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground text-base font-medium">
-              Generate report
-            </Button>
-          </div>
-        </section>
+            <div className="flex flex-col gap-4">
+              {displayedMentions.map((mention) => {
+                const PlatformIcon = PlatformIcons[mention.platform];
+                const SentimentIcon = sentimentIcons[mention.sentiment];
+
+                return (
+                  <Card
+                    key={mention.id}
+                    className="border border-slate-200 bg-white/80 rounded-2xl shadow-lg overflow-hidden"
+                  >
+                    <CardContent className="p-5">
+                      <div className="flex items-start gap-4">
+                        <div
+                          className={cn(
+                            "p-3 rounded-xl border shadow-sm",
+                            platformColors[mention.platform]
+                          )}
+                        >
+                          <PlatformIcon className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2 mb-2">
+                            <span className="text-sm font-semibold text-slate-800 truncate">
+                              {mention.username}
+                            </span>
+                            <span className="text-xs text-slate-500 shrink-0">
+                              {mention.time}
+                            </span>
+                          </div>
+                          <p className="text-sm text-slate-600 leading-relaxed line-clamp-2 mb-3">
+                            {mention.content}
+                          </p>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-slate-500">
+                              {mention.engagement}
+                            </span>
+                            <Badge
+                              variant="secondary"
+                              className={cn(
+                                "text-xs font-medium px-3 py-1.5 rounded-full border flex items-center gap-1.5",
+                                sentimentColors[mention.sentiment]
+                              )}
+                            >
+                              <SentimentIcon className="w-3 h-3" />
+                              {mention.sentiment === "positive"
+                                ? "Positivo"
+                                : mention.sentiment === "negative"
+                                ? "Negativo"
+                                : "Neutro"}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+
+            <div ref={loaderRef} className="flex justify-center py-6">
+              {isLoading && (
+                <div className="flex items-center gap-2 text-slate-500">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600" />
+                  <span className="text-sm">Cargando más menciones...</span>
+                </div>
+              )}
+              {!hasMore && displayedMentions.length > 0 && (
+                <p className="text-sm text-slate-500">
+                  No hay más menciones para cargar
+                </p>
+              )}
+            </div>
+
+            {/* Generate Report Button */}
+            <div className="mt-2">
+              <Button className="w-full h-14 rounded-2xl bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-300">
+                <Sparkles className="w-5 h-5 mr-2" />
+                Generar reporte
+              </Button>
+            </div>
+          </section>
+        </div>
       </div>
     </div>
-  )
+  );
 }

@@ -84,48 +84,52 @@ export function SearchCommand({
   };
 
   return (
-    <Command className="rounded-lg border shadow-md">
+    <Command className="rounded-2xl border border-white/20 bg-white/5 backdrop-blur-sm overflow-hidden [&_[data-slot=command-input-wrapper]]:border-b-0 [&_[data-slot=command-input-wrapper]]:h-14 [&_[data-slot=command-input-wrapper]]:px-4 [&_[data-slot=command-input-wrapper]]:gap-3 [&_[data-slot=command-input-wrapper]_svg]:size-5 [&_[data-slot=command-input-wrapper]_svg]:text-gray-400 [&_[data-slot=command-input-wrapper]_svg]:opacity-100">
       <CommandInput
-        placeholder="Buscar empresa..."
+        placeholder="Ej: Mi Empresa S.A.C."
         value={value}
         onValueChange={handleValueChange}
+        className="!h-14 text-base text-white placeholder:text-gray-400"
       />
       {value.length > 0 && !isSelected && (
-        <CommandList>
+        <CommandList className="border-t border-white/10 max-h-[250px]">
           <CommandEmpty>
-            <div className="flex items-center justify-center gap-1 py-4">
-              <span className="text-sm text-muted-foreground">
-                No encuentro la empresa.
+            <div className="flex flex-col items-center justify-center gap-2 py-6">
+              <span className="text-sm text-gray-400">
+                No encontramos esa empresa
               </span>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleSelectCurrentValue}
-                className="h-auto p-0 text-sm font-normal text-primary hover:bg-transparent hover:underline"
+                className="h-auto px-3 py-1.5 text-sm font-medium text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 rounded-lg transition-colors"
               >
-                Seleccionar el mismo
+                Usar "{value}" de todos modos
               </Button>
             </div>
           </CommandEmpty>
-          <CommandGroup heading="Empresas">
+          <CommandGroup heading="Empresas sugeridas" className="text-gray-400">
             {filteredCompanies.map((company) => (
               <CommandItem
                 key={company.shortName}
                 value={company.name}
                 onSelect={handleSelect}
+                className="py-3 px-3 mx-1 my-0.5 rounded-xl text-white cursor-pointer transition-colors data-[selected=true]:bg-gradient-to-r data-[selected=true]:from-cyan-500/20 data-[selected=true]:to-purple-500/20 data-[selected=true]:text-cyan-300 hover:bg-white/10"
               >
                 {company.logo ? (
                   <img
                     src={company.logo}
                     alt={company.shortName}
-                    className="mr-2 h-5 w-5 object-contain"
+                    className="mr-3 h-8 w-8 rounded-lg object-contain bg-white/10 p-1"
                   />
                 ) : (
-                  <Building2 className="mr-2 h-5 w-5 text-muted-foreground" />
+                  <div className="mr-3 h-8 w-8 rounded-lg bg-gradient-to-br from-cyan-500/20 to-purple-500/20 flex items-center justify-center">
+                    <Building2 className="h-4 w-4 text-cyan-400" />
+                  </div>
                 )}
                 <div className="flex flex-col">
                   <span className="font-medium">{company.name}</span>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs text-gray-400">
                     {company.industry}
                   </span>
                 </div>
