@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Frontend de Entropy - Sistema de Búsqueda Empresarial",
   "private": true,
-  "homepage": "https://proyecthacks.onrender.com",
+  "homepage": "https://proyecthack-lt6c.onrender.com",
   "engines": {
     "node": ">=20.9.0",
     "npm": ">=10.0.0"
