@@ -22,16 +22,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-try:
-    from modules.tiktok_search import search_tiktok
-    from modules.google_search import search_google
-    from modules.instagram_search import search_instagram_term, search_instagram_hashtag, search_instagram_profile
-    from modules.capture import capture_all
-    from modules.latest import process_latest_metas, get_posts
-    logger.info("✅ All modules imported successfully")
-except ImportError as e:
-    logger.error(f"❌ Failed to import modules: {e}", exc_info=True)
-    raise
+from modules.tiktok_search import search_tiktok
+from modules.google_search import search_google
+from modules.instagram_search import search_instagram_term, search_instagram_hashtag, search_instagram_profile
+from modules.capture import capture_all
+from modules.latest import process_latest_metas, get_posts
 
 app = FastAPI(
     title="Global Search API",

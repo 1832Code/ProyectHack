@@ -7,6 +7,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY src/ ./src/
 
+RUN echo "=== Verifying source structure ===" && \
+    ls -la /app/src/ && \
+    echo "=== Verifying api_global_search.py exists ===" && \
+    test -f /app/src/api_global_search.py && echo "✅ api_global_search.py found" || (echo "❌ api_global_search.py NOT FOUND" && exit 1) && \
+    echo "=== Checking get_client function ===" && \
+    (grep -q "def get_client" /app/src/api_global_search.py && echo "✅ get_client function found") || (echo "❌ get_client function NOT FOUND" && exit 1)
+
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 ENV API_MODULE=api_global_search
