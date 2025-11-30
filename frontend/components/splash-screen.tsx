@@ -22,7 +22,7 @@ export function SplashScreen() {
             src="/logo.png"
             alt="Entropy Logo"
             width={128}
-            height={128}
+            height={128}  
             className="object-contain"
           />
         </div>
