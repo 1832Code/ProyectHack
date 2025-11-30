@@ -16,6 +16,13 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+def _clean_url(url: Optional[str]) -> Optional[str]:
+    """Clean URL by removing newlines, carriage returns, and tabs."""
+    if not url:
+        return None
+    return str(url).strip().replace("\n", "").replace("\r", "").replace("\t", "")
+
+
 def process_meta_data(meta: Dict[str, Any]) -> List[Dict[str, Any]]:
     """
     Process a single meta record and extract data for posts table.
@@ -104,11 +111,7 @@ def _process_tiktok_data(item: Dict[str, Any], processed: Dict[str, Any]) -> Dic
             processed["title"] = text[:500] if len(text) > 500 else text
             processed["description"] = text[:2000] if len(text) > 2000 else text
         
-        video_url = item.get("webVideoUrl")
-        if video_url:
-            processed["video"] = str(video_url).strip().replace("\n", "").replace("\r", "")
-        else:
-            processed["video"] = None
+        processed["video"] = _clean_url(item.get("webVideoUrl"))
         
         author_meta = item.get("authorMeta", {})
         if isinstance(author_meta, dict):
@@ -116,10 +119,7 @@ def _process_tiktok_data(item: Dict[str, Any], processed: Dict[str, Any]) -> Dic
         else:
             image_url = item.get("authorMeta.avatar")
         
-        if image_url:
-            processed["image"] = str(image_url).strip().replace("\n", "").replace("\r", "")
-        else:
-            processed["image"] = None
+        processed["image"] = _clean_url(image_url)
         
         play_count = item.get("playCount", 0)
         digg_count = item.get("diggCount", 0)
@@ -151,17 +151,8 @@ def _process_instagram_data(item: Dict[str, Any], processed: Dict[str, Any]) -> 
         processed["title"] = item.get("caption", "")[:500] if item.get("caption") else None
         processed["description"] = item.get("caption", "")[:2000] if item.get("caption") else None
         
-        image_url = item.get("displayUrl") or item.get("url")
-        if image_url:
-            processed["image"] = image_url.strip().replace("\n", "").replace("\r", "")
-        else:
-            processed["image"] = None
-        
-        video_url = item.get("videoUrl")
-        if video_url:
-            processed["video"] = video_url.strip().replace("\n", "").replace("\r", "")
-        else:
-            processed["video"] = None
+        processed["image"] = _clean_url(item.get("displayUrl") or item.get("url"))
+        processed["video"] = _clean_url(item.get("videoUrl"))
         
         processed["insight1"] = float(item.get("likesCount", 0)) if item.get("likesCount") else None
         processed["insight2"] = float(item.get("commentsCount", 0)) if item.get("commentsCount") else None
@@ -200,8 +191,9 @@ def post_exists(title: str, video: Optional[str] = None, id_company: int = 1) ->
         query = supabase.table("posts").select("id").eq("id_company", id_company).eq("title", clean_title)
         
         if video:
-            clean_video = video.strip().replace("\n", "").replace("\r", "")
-            query = query.eq("video", clean_video)
+            clean_video = _clean_url(video)
+            if clean_video:
+                query = query.eq("video", clean_video)
         
         response = query.limit(1).execute()
         
@@ -263,8 +255,12 @@ def save_post(processed_data: Dict[str, Any], skip_existing: bool = True) -> Opt
     """
     try:
         title = processed_data.get("title")
-        video = processed_data.get("video")
+        video = _clean_url(processed_data.get("video"))
+        image = _clean_url(processed_data.get("image"))
         id_company = processed_data.get("id_company", 1)
+        
+        processed_data["video"] = video
+        processed_data["image"] = image
         
         if skip_existing and title:
             if post_exists(title, video, id_company):
