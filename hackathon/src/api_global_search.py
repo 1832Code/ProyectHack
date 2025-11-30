@@ -27,6 +27,7 @@ from src.modules.google_search import search_google
 from src.modules.instagram_search import search_instagram_term, search_instagram_hashtag, search_instagram_profile
 from src.modules.capture import capture_all
 from src.modules.latest import process_latest_metas, get_posts
+from src.modules.analytics import count_keyword_mentions, calculate_sentiment_approval
 
 app = FastAPI(
     title="Global Search API",
@@ -94,6 +95,33 @@ class HealthResponse(BaseModel):
     status: str
     service: str
     version: str
+
+
+class KeywordMentionsResponse(BaseModel):
+    keyword: str
+    count_mentions: int
+    error: Optional[str] = None
+
+
+class SentimentApprovalResponse(BaseModel):
+    approval_score: float
+    total_posts: int
+    positive_count: int
+    negative_count: int
+    neutral_count: int
+    keyword: Optional[str] = None
+    error: Optional[str] = None
+
+
+class AnalyticsResponse(BaseModel):
+    keyword: str
+    count_mentions: int
+    approval_score: float
+    sentiment_total_posts: int
+    sentiment_positive_count: int
+    sentiment_negative_count: int
+    sentiment_neutral_count: int
+    error: Optional[str] = None
 
 
 _apify_client = None
@@ -316,6 +344,42 @@ async def get_local_posts(limit: int = 100, id_company: int = 1):
         logger.error(f"❌ Error getting local posts: {e}", exc_info=True)
         import traceback
         logger.error(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
+
+
+@app.get("/analytics", response_model=AnalyticsResponse)
+async def get_analytics(keyword: str, id_company: int = 1, limit: int = 1000):
+    """
+    Obtener todas las métricas de analytics para un keyword.
+    Incluye: count_mentions y sentiment approval.
+    
+    Args:
+        keyword: Keyword a analizar (requerido)
+        id_company: ID de la compañía (default: 1)
+        limit: Número máximo de posts a analizar para sentiment (default: 1000)
+        
+    Returns:
+        Dict con todas las métricas: count_mentions, approval_score, sentiment_total_posts, etc.
+    """
+    try:
+        logger.info(f"Analytics request: keyword='{keyword}', id_company={id_company}, limit={limit}")
+        
+        mentions_result = count_keyword_mentions(keyword=keyword, id_company=id_company)
+        sentiment_result = calculate_sentiment_approval(keyword=keyword, id_company=id_company, limit=limit)
+        
+        return AnalyticsResponse(
+            keyword=mentions_result.get("keyword", keyword),
+            count_mentions=mentions_result.get("count_mentions", 0),
+            approval_score=sentiment_result.get("approval_score", 0),
+            sentiment_total_posts=sentiment_result.get("total_posts", 0),
+            sentiment_positive_count=sentiment_result.get("positive_count", 0),
+            sentiment_negative_count=sentiment_result.get("negative_count", 0),
+            sentiment_neutral_count=sentiment_result.get("neutral_count", 0),
+            error=mentions_result.get("error") or sentiment_result.get("error")
+        )
+        
+    except Exception as e:
+        logger.error(f"Error in analytics: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
 
 

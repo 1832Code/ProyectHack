@@ -40,6 +40,7 @@ def process_meta_data(meta: Dict[str, Any]) -> List[Dict[str, Any]]:
         meta_data = meta.get("meta", {})
         label = meta.get("label", "")
         id_company = meta.get("id_company", 1)
+        query = meta.get("query", "")
         
         logger.info(f"Meta data type: {type(meta_data)}, length: {len(meta_data) if isinstance(meta_data, (list, dict)) else 'N/A'}")
         
@@ -60,7 +61,7 @@ def process_meta_data(meta: Dict[str, Any]) -> List[Dict[str, Any]]:
             logger.warning(f"Meta data list is empty for meta ID: {meta.get('id')}")
             return []
         
-        logger.info(f"Processing {len(meta_data)} items from meta ID: {meta.get('id')}")
+        logger.info(f"Processing {len(meta_data)} items from meta ID: {meta.get('id')} with query: '{query}'")
         
         processed_posts = []
         skipped_items = 0
@@ -68,6 +69,7 @@ def process_meta_data(meta: Dict[str, Any]) -> List[Dict[str, Any]]:
         for idx, item in enumerate(meta_data):
             processed = {
                 "id_company": id_company,
+                "query": query,
                 "title": None,
                 "description": None,
                 "insight1": None,

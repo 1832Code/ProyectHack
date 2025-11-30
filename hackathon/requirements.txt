@@ -8,3 +8,4 @@ langchain-deepseek
 langchain-community>=0.3.0
 supabase>=2.0.0
 supabase
+spacy>=3.7.0
