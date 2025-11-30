@@ -11,16 +11,6 @@ import psycopg2
 from supabase import create_client, Client
 from functools import wraps
 
-# Importar servicios
-from supabase_client import (
-    get_supabase_client, 
-    get_component_from_db, 
-    get_all_component_keywords, 
-    save_component_to_db, 
-    save_search_history
-)
-from company_lookup_service import lookup_company, extract_api_data
-
 load_dotenv()
 
 app = Flask(__name__)
@@ -73,9 +63,6 @@ client = OpenAI(
     api_key=DEEPSEEK_API_KEY,
     base_url="https://api.deepseek.com"
 )
-
-# Obtener cliente de Supabase
-supabase = get_supabase_client()
 
 # ==================== MIDDLEWARE DE AUTENTICACIÓN ====================
 def require_auth(f):
@@ -199,7 +186,7 @@ Retorna SOLO un JSON con este formato:
         
         response_text = response.choices[0].message.content.strip()
         if response_text.startswith('```'):
-            response_text = response.split('```')[1]
+            response_text = response_text.split('```')[1]
             if response_text.startswith('json'):
                 response_text = response_text[4:]
         
