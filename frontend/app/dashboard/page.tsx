@@ -4,13 +4,20 @@ interface DashboardPageProps {
   searchParams: Promise<{ data?: string }>;
 }
 
+interface CompanyAttributes {
+  companyName: string;
+  country: string;
+  categories: string[];
+}
+
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const { data } = await searchParams;
+  let decodedData: CompanyAttributes | null = null;
 
   if (data) {
-    const decoded = JSON.parse(decodeURIComponent(atob(data)));
-    console.log("Decoded data:", decoded);
+    decodedData = JSON.parse(decodeURIComponent(atob(data)));
+    console.log("Decoded data:", decodedData);
   }
 
-  return <DashboardScreen />;
+  return <DashboardScreen companyName={decodedData?.companyName ?? ""} />;
 }

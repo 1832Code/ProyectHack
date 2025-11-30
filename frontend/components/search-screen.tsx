@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { SearchCommand } from "@/components/search-command";
 import { cn } from "@/lib/utils";
+import { useServices } from "@/components/providers/services-providers";
 
 const countries = [
   { id: "peru", label: "Perú" },
@@ -22,6 +23,12 @@ const countries = [
 
 export function SearchScreen() {
   const router = useRouter();
+  const { resetAll } = useServices();
+
+  // Reset all data when navigating to search page
+  useEffect(() => {
+    resetAll();
+  }, [resetAll]);
 
   const [companyName, setCompanyName] = useState("");
   const [country, setCountry] = useState("peru");

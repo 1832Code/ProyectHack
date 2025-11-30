@@ -2,6 +2,7 @@ import type React from "react"
 import type { Metadata, Viewport } from "next"
 import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
+import { ServicesProvider } from "@/components/providers/services-providers"
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -25,7 +26,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body className={`${GeistSans.variable} ${GeistMono.variable} font-sans antialiased`}>{children}</body>
+      <body className={`${GeistSans.variable} ${GeistMono.variable} font-sans antialiased`}>
+        <ServicesProvider>
+          {children}
+        </ServicesProvider>
+      </body>
     </html>
   )
 }
